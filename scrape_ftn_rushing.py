@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Scrape FTN team rushing stats (offense + defense) into Supabase.
+
+Data source: the statshub API that ftnfantasy.com/nfl/stats calls itself.
+Only the free/ungated fields are returned; advanced metrics (DVOA, SUC%,
+YBCO/YACO, STF%, EXP%) require a paid FTN account and are not available here.
+"""
+import json
+import os
+import subprocess
+import sys
+from datetime import date, datetime, timezone
+
+import requests
+
+API = "https://6u5we6fbxi.execute-api.us-east-1.amazonaws.com/Statshub/statshub"
+UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+SEASON = int(os.environ.get("FTN_SEASON", 2026))
+TABLE = "nfl_rushing_team_stats"
+
+# The page sends a literal "Bearer undefined" for unauthenticated (free) access.
+AUTH = os.environ.get("FTN_AUTH", "Bearer undefined")
+
+FILTER = {
+    "alignment": [], "belowFreezing": None, "beyondLine": None, "blitz": None,
+    "condition": None, "coverage": [], "coverageType": None,
+    "defensivePersonnel": [], "designedRun": None, "distance": [], "dome": None,
+    "downs": [], "favorite": None, "firstRead": None, "insideFive": None,
+    "insideTen": None, "location": [], "motion": [], "noHuddle": None,
+    "offensivePersonnel": [], "opponents": [], "option": None,
+    "outOfPocket": None, "playAction": None, "ppr": 1, "precipitation": None,
+    "pressure": None, "quarters": [], "quickRelease": None, "redZone": None,
+    "route": [], "runConcept": [], "scramble": None, "seasonType": "reg",
+    "separationType": [], "separationYards": [], "shotgun": None,
+    "situation": [], "sneak": None, "stackedBox": None, "teams": [],
+    "trickPlay": None, "twoMinDrill": None, "weeks": [], "wind": None,
+    "yardsToEndzone": None, "year": SEASON,
+}
+
+
+def keychain(service):
+    try:
+        out = subprocess.run(["security", "find-generic-password", "-s", service, "-w"],
+                             capture_output=True, text=True, timeout=10)
+        return out.stdout.strip() or None
+    except Exception:
+        return None
+
+
+def supabase_creds():
+    url = os.environ.get("SUPABASE_URL") or keychain("nfl-rushing-supabase-url")
+    key = os.environ.get("SUPABASE_KEY") or keychain("nfl-rushing-supabase-key")
+    if not url or not key:
+        sys.exit("Missing Supabase credentials (env SUPABASE_URL/SUPABASE_KEY "
+                 "or keychain nfl-rushing-supabase-url / -key)")
+    return url.rstrip("/"), key
+
+
+def fetch(view):
+    """view: 'team' = rushing offense, 'defense' = rushing defense."""
+    r = requests.post(f"{API}/rushing/{view}", json=FILTER, timeout=45, headers={
+        "Content-Type": "application/json",
+        "Authorization": AUTH,
+        "Origin": "https://ftnfantasy.com",
+        "Referer": "https://ftnfantasy.com/",
+        "User-Agent": UA,
+    })
+    r.raise_for_status()
+    data = r.json()
+    if not isinstance(data, list) or len(data) != 32:
+        raise RuntimeError(f"{view}: expected 32 team rows, got {type(data).__name__} "
+                           f"len={len(data) if hasattr(data,'__len__') else '?'}")
+    return data
+
+
+def shape(rows, side, scraped):
+    out = []
+    for r in rows:
+        att = r.get("attempts") or 0
+        yds = r.get("rushingYards") or 0
+        out.append({
+            "season": SEASON,
+            "scraped_on": scraped.isoformat(),
+            "scraped_at": datetime.now(timezone.utc).isoformat(),
+            "side": side,
+            "team": r["team"],
+            "games": r.get("games"),
+            "attempts": att,
+            "rushing_yards": yds,
+            "ypc": round(yds / att, 4) if att else None,
+            "rushing_tds": r.get("rushingTouchdowns"),
+            "first_downs": r.get("firstDowns"),
+            "fumbles": r.get("fumbles"),
+            "fumbles_lost": r.get("fumblesLost"),
+            "long_run": r.get("longRun"),
+            "rushing_snaps": r.get("rushingSnaps"),
+        })
+    return out
+
+
+def verify(off, dfn):
+    """League totals must reconcile: every carry is one team's and another's allowed."""
+    oa, da = sum(r["attempts"] for r in off), sum(r["attempts"] for r in dfn)
+    oy, dy = sum(r["rushing_yards"] for r in off), sum(r["rushing_yards"] for r in dfn)
+    if oa != da or oy != dy:
+        raise RuntimeError(f"integrity check failed: attempts {oa} vs {da}, yards {oy} vs {dy}")
+    return oa, oy
+
+
+def push(url, key, rows):
+    r = requests.post(
+        f"{url}/rest/v1/{TABLE}",
+        params={"on_conflict": "season,scraped_on,side,team"},
+        headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=minimal",
+        },
+        data=json.dumps(rows), timeout=60)
+    if r.status_code >= 300:
+        raise RuntimeError(f"supabase write failed {r.status_code}: {r.text[:400]}")
+
+
+def main():
+    scraped = date.today()
+    off = shape(fetch("team"), "offense", scraped)
+    dfn = shape(fetch("defense"), "defense", scraped)
+    att, yds = verify(off, dfn)
+    print(f"[{datetime.now():%Y-%m-%d %H:%M}] season {SEASON}: 32 offense + 32 defense rows; "
+          f"league totals {att} att / {yds} yds; integrity OK")
+
+    if "--dry-run" in sys.argv:
+        print(json.dumps(off[:2] + dfn[:2], indent=2))
+        return
+    url, key = supabase_creds()
+    push(url, key, off + dfn)
+    print(f"wrote 64 rows to {TABLE} for {scraped}")
+
+
+if __name__ == "__main__":
+    main()

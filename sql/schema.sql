@@ -29,3 +29,11 @@ create or replace view nfl_rushing_latest as
 select distinct on (season, side, team) *
 from nfl_rushing_team_stats
 order by season, side, team, scraped_on desc;
+
+-- Rebuilt after adding Stats iQ columns; `select *` views freeze their
+-- column list at creation, so this must be re-run whenever columns are added.
+drop view if exists nfl_rushing_latest;
+create view nfl_rushing_latest as
+select distinct on (season, side, team) *
+from nfl_rushing_team_stats
+order by season, side, team, scraped_on desc;

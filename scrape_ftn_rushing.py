@@ -13,6 +13,8 @@ from datetime import date, datetime, timezone
 
 import requests
 
+import ftn_tables
+
 API = "https://6u5we6fbxi.execute-api.us-east-1.amazonaws.com/Statshub/statshub"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
@@ -74,12 +76,21 @@ def fetch(view):
     return data
 
 
-def shape(rows, side, scraped):
+def shape(rows, side, scraped, iq):
+    """Merge statshub base volume stats with the Stats iQ advanced tables.
+
+    NOTE: aybco + ayaco does NOT equal ypc. The statshub attempt universe and
+    the Stats iQ one differ (~0.9 yds/att on average, inconsistent sign), so
+    ypc is always computed from statshub attempts/yards and never derived.
+    """
+    adv = iq["off_rush"] if side == "offense" else iq["def_rush"]
+    ovw = iq["off_ovw"] if side == "offense" else iq["def_ovw"]
+    tempo = iq["tempo"] if side == "offense" else {}
     out = []
     for r in rows:
         att = r.get("attempts") or 0
         yds = r.get("rushingYards") or 0
-        out.append({
+        row = {
             "season": SEASON,
             "scraped_on": scraped.isoformat(),
             "scraped_at": datetime.now(timezone.utc).isoformat(),
@@ -95,7 +106,22 @@ def shape(rows, side, scraped):
             "fumbles_lost": r.get("fumblesLost"),
             "long_run": r.get("longRun"),
             "rushing_snaps": r.get("rushingSnaps"),
-        })
+        }
+        t = r["team"]
+        for src in (adv.get(t, {}), ovw.get(t, {}), tempo.get(t, {})):
+            for k, v in src.items():
+                row.setdefault(k, v)
+        if row.get("ply_gm") is None:
+            # FTN publishes no defensive tempo table, but plays faced per game
+            # falls out of the overview: total yards / yards-per-play / games.
+            # Validated against the offense tempo table (KC 72.2 derived vs 72.5
+            # published; YD/PLY is rounded to 1dp, worth ~0.4% of error).
+            py, ry, ypp, g = (row.get("pass_yd"), row.get("rush_yd"),
+                              row.get("yd_ply"), row.get("games"))
+            if all(v for v in (py is not None and py + (ry or 0), ypp, g)):
+                row["ply_gm"] = round((py + (ry or 0)) / ypp / g, 2)
+                row["ply_gm_derived"] = True
+        out.append(row)
     return out
 
 
@@ -106,6 +132,16 @@ def verify(off, dfn):
     if oa != da or oy != dy:
         raise RuntimeError(f"integrity check failed: attempts {oa} vs {da}, yards {oy} vs {dy}")
     return oa, oy
+
+
+def normalize(rows):
+    """PostgREST requires every object in a batch to carry identical keys.
+    Defense rows have no tempo fields (FTN publishes no defensive tempo table),
+    so pad every row to the union of keys."""
+    keys = set()
+    for r in rows:
+        keys |= r.keys()
+    return [{k: r.get(k) for k in sorted(keys)} for r in rows]
 
 
 def push(url, key, rows):
@@ -125,8 +161,10 @@ def push(url, key, rows):
 
 def main():
     scraped = date.today()
-    off = shape(fetch("team"), "offense", scraped)
-    dfn = shape(fetch("defense"), "defense", scraped)
+    iq = ftn_tables.fetch_all(SEASON)
+    print(f"stats-iq tables: " + ", ".join(f"{k}={len(v)}" for k, v in iq.items()))
+    off = shape(fetch("team"), "offense", scraped, iq)
+    dfn = shape(fetch("defense"), "defense", scraped, iq)
     att, yds = verify(off, dfn)
     print(f"[{datetime.now():%Y-%m-%d %H:%M}] season {SEASON}: 32 offense + 32 defense rows; "
           f"league totals {att} att / {yds} yds; integrity OK")
@@ -135,7 +173,7 @@ def main():
         print(json.dumps(off[:2] + dfn[:2], indent=2))
         return
     url, key = supabase_creds()
-    push(url, key, off + dfn)
+    push(url, key, normalize(off + dfn))
     print(f"wrote 64 rows to {TABLE} for {scraped}")
 
 

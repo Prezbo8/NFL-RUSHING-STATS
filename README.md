@@ -103,6 +103,19 @@ python3 scrape_ftn_rushing.py                    # fetch + write
 python3 rebuild_view.py                          # after adding columns
 ```
 
+## Live dashboard
+
+`index.html` is served from GitHub Pages and reads Supabase directly, so it is always current
+rather than a snapshot — compare any two teams' rushing offense against the other's rushing
+defense, plus a sortable rankings table for all 32.
+
+It uses the project's **anon** key, which is read-only: row-level security grants `select` only,
+and insert/update/delete are revoked from the `anon` role outright. The scraper writes with the
+service-role key from Keychain, which bypasses RLS and never appears in this repo.
+
+The sample-size callout is computed from the loaded data, not hardcoded, and hides itself once
+teams reach 8 games.
+
 ## Storage
 
 Supabase project `mlb-2026-stats`, table `nfl_rushing_team_stats`, view

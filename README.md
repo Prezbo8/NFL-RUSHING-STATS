@@ -100,7 +100,6 @@ launchctl start com.daniell.nfl.rushing
 ```bash
 python3 scrape_ftn_rushing.py --dry-run          # fetch + verify, no write
 python3 scrape_ftn_rushing.py                    # fetch + write
-FTN_SEASON=2025 python3 scrape_ftn_rushing.py    # backfill another season
 python3 rebuild_view.py                          # after adding columns
 ```
 

@@ -347,22 +347,6 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
 </style>
 <style>.live .src+.src{margin-top:-1px;opacity:.82}</style>
 <style>
-.edges{min-width:0;flex:1}
-.edgehead{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:.13em;
-  text-transform:uppercase;color:var(--faint);padding:0 8px 8px;display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline}
-.edgehead span{font-family:"Public Sans",system-ui,sans-serif;font-weight:400;font-size:12px;
-  letter-spacing:0;text-transform:none;color:var(--faint)}
-.edgerow{display:grid;grid-template-columns:96px 42px 1fr 52px;gap:10px;align-items:center;
-  padding:4px 8px;font-size:13.5px}
-.edgerow .es{color:var(--muted)}
-.edgerow .et{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px;letter-spacing:.01em}
-.edgerow .eb{height:7px;background:var(--sunk);border-radius:1px;overflow:hidden;min-width:40px}
-.edgerow .eb i{display:block;height:100%;border-radius:1px}
-.edgerow .en{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
-.edgerow.even .et,.edgerow.even .en{color:var(--faint);font-weight:500}
-@media (max-width:560px){.edgerow{grid-template-columns:86px 38px 1fr 46px;gap:8px;font-size:13px}}
-</style>
-<style>
 /* Highlighted cells: number centred, colour filling the whole cell rather
    than sitting in a padded block with uneven top/bottom gaps. */
 table.model tr.rks td{height:1px}                 /* lets the span stretch to the row */
@@ -374,6 +358,31 @@ table.model tr.vals td:not(.side) span{text-align:center}
   height:100%;min-height:34px;padding:6px 8px;text-align:center}
 #ranktable thead th:not(.tm):not(.num){text-align:center}
 table.model th:not(.side){text-align:center}
+</style>
+<style>
+.edges{min-width:0;flex:1}
+.edgehead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;padding:0 8px 9px;
+  font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint)}
+.edgehead .dirs{margin-left:auto;display:flex;gap:14px;font-size:11.5px;letter-spacing:.06em}
+.edgerow{display:grid;grid-template-columns:92px 1fr 46px 74px;gap:11px;align-items:center;
+  padding:5px 8px;font-size:13.5px}
+.edgerow .es{color:var(--muted)}
+/* Track diverges from the centre: the offence grows right, the defence left,
+   so the balance of the matchup reads as a shape before you read a number. */
+.edgerow .eb{position:relative;height:10px;background:var(--sunk);border-radius:1px;min-width:60px}
+.edgerow .eb::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
+  background:var(--line-strong)}
+.edgerow .eb i{position:absolute;top:0;bottom:0;border-radius:1px}
+.edgerow .eb i.r{left:50%}
+.edgerow .eb i.l{right:50%}
+.edgerow .en{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.edgerow .er{text-align:right;font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.edgerow .er s{text-decoration:none;opacity:.6;padding:0 1px}
+.edgerow.even .en{color:var(--faint);font-weight:500}
+@media (max-width:620px){.edgerow{grid-template-columns:78px 1fr 42px;gap:8px;font-size:13px}
+  .edgerow .er{display:none}.edgehead .dirs{margin-left:0;width:100%}}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -633,28 +642,31 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// One row per core stat: who holds the edge, and by how much. The magnitude is
-// a percentile gap, so a rushing offense and a defense's "allowed" version of the
-// same stat can be compared at all. Always stated from the winner's side, so the
-// number is never negative.
+// One row per core stat. The track diverges from the centre — the offence's
+// edge grows right, the defence's left — and the ranks behind each gap make
+// the number checkable against the table above.
 function edges(offT, defT) {
   const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);
     const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
+    const ranks = `<span class="er">#${o.rank} <s>vs</s> #${d.rank}</span>`;
     if (Math.abs(gap) < 8)
-      return `<div class="edgerow even"><span class="es">${lab}</span><span class="et">even</span>
-        <span class="eb"></span><span class="en">—</span></div>`;
-    const win  = gap > 0 ? offT : defT;
-    const col  = gap > 0 ? "var(--tOff)" : "var(--tDef)";
-    const mag  = Math.abs(gap);
+      return `<div class="edgerow even"><span class="es">${lab}</span>
+        <span class="eb"></span><span class="en">even</span>${ranks}</div>`;
+    const right = gap > 0;
+    const col = right ? "var(--tOff)" : "var(--tDef)";
+    const mag = Math.abs(gap);
     return `<div class="edgerow"><span class="es">${lab}</span>
-      <span class="et" style="color:${col}">${win}</span>
-      <span class="eb"><i style="width:${mag}%;background:${col}"></i></span>
-      <span class="en" style="color:${col}">+${mag}</span></div>`;
+      <span class="eb"><i class="${right?"r":"l"}" style="width:${mag/2}%;background:${col}"></i></span>
+      <span class="en" style="color:${col}">+${mag}</span>${ranks}</div>`;
   }).join("");
-  return `<div class="edgehead">Edges <span>who wins each stat, and by how much</span></div>${rows}`;
+  return `<div class="edgehead">Edges
+    <span class="dirs">
+      <b style="color:var(--tDef)">&#9664; ${defT} def</b>
+      <b style="color:var(--tOff)">${offT} off &#9654;</b>
+    </span></div>${rows}`;
 }
 
 function panel(offT, defT) {

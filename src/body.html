@@ -214,28 +214,31 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// One row per core stat: who holds the edge, and by how much. The magnitude is
-// a percentile gap, so a rushing offense and a defense's "allowed" version of the
-// same stat can be compared at all. Always stated from the winner's side, so the
-// number is never negative.
+// One row per core stat. The track diverges from the centre — the offence's
+// edge grows right, the defence's left — and the ranks behind each gap make
+// the number checkable against the table above.
 function edges(offT, defT) {
   const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);
     const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
+    const ranks = `<span class="er">#${o.rank} <s>vs</s> #${d.rank}</span>`;
     if (Math.abs(gap) < 8)
-      return `<div class="edgerow even"><span class="es">${lab}</span><span class="et">even</span>
-        <span class="eb"></span><span class="en">—</span></div>`;
-    const win  = gap > 0 ? offT : defT;
-    const col  = gap > 0 ? "var(--tOff)" : "var(--tDef)";
-    const mag  = Math.abs(gap);
+      return `<div class="edgerow even"><span class="es">${lab}</span>
+        <span class="eb"></span><span class="en">even</span>${ranks}</div>`;
+    const right = gap > 0;
+    const col = right ? "var(--tOff)" : "var(--tDef)";
+    const mag = Math.abs(gap);
     return `<div class="edgerow"><span class="es">${lab}</span>
-      <span class="et" style="color:${col}">${win}</span>
-      <span class="eb"><i style="width:${mag}%;background:${col}"></i></span>
-      <span class="en" style="color:${col}">+${mag}</span></div>`;
+      <span class="eb"><i class="${right?"r":"l"}" style="width:${mag/2}%;background:${col}"></i></span>
+      <span class="en" style="color:${col}">+${mag}</span>${ranks}</div>`;
   }).join("");
-  return `<div class="edgehead">Edges <span>who wins each stat, and by how much</span></div>${rows}`;
+  return `<div class="edgehead">Edges
+    <span class="dirs">
+      <b style="color:var(--tDef)">&#9664; ${defT} def</b>
+      <b style="color:var(--tOff)">${offT} off &#9654;</b>
+    </span></div>${rows}`;
 }
 
 function panel(offT, defT) {

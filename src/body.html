@@ -3,17 +3,11 @@
   <div class="brand">
     <img src="" id="nfllogo" alt="NFL">
     <div class="brandtext">
-      <h1>Prezbo Model</h1>
+      <h1>Prezbo's Model</h1>
       <div class="week" id="weeklabel"></div>
     </div>
   </div>
-  <p class="sub">Rushing offense against rushing defense — stats over ranks, both directions of the matchup.</p>
-  <div class="meta">
-    <span id="m-season"></span><span id="m-date"></span><span id="m-src">FTN · statshub + Stats iQ</span>
-  </div>
 </header>
-
-<div class="warn" id="warn" hidden><div id="warntext"></div></div>
 
 <div class="tabs" role="tablist">
   <button class="tab" id="tab-matchup" role="tab" aria-selected="true" aria-controls="view-matchup">Matchup</button>
@@ -173,30 +167,6 @@ const DEFS = {
   crt_pct:["Creation Rate","Share of rushing yards that came after contact."],
   aryoe:["Rush Yards Over Expected","Yards above what an average back would get. Not published yet this season."],
 };
-
-// Computed rather than hardcoded so a live page can't drift out of date.
-function sampleNote(){
-  const gp = Object.values(DATA).map(v=>v.offense.games).filter(Boolean);
-  if (!gp.length) return;
-  const lo = Math.min(...gp), hi = Math.max(...gp);
-  if (hi >= 8) return;                    // by then the numbers stand on their own
-  let worst = null;
-  for (const [t,v] of Object.entries(DATA)) {
-    const o = v.offense;
-    if (!o.long_run || !o.rushing_yards) continue;
-    const share = o.long_run / o.rushing_yards;
-    if (!worst || share > worst.share) worst = {t, share, long:o.long_run};
-  }
-  const games = lo === hi ? `${hi} games` : `${lo}-${hi} games`;
-  const tail = worst ? ` ${NAMES[worst.t]} have gained ${Math.round(worst.share*100)}% of their
-    season rushing yards on a single ${worst.long}-yard carry.` : "";
-  const box = document.getElementById("warn");
-  if (!box) return;
-  document.getElementById("warntext").innerHTML =
-    `<b>${games} of data.</b> At this sample size one long run reorders the board.${tail}
-     Read direction, not magnitude, until about Week 6.`;
-  box.hidden = false;
-}
 
 function wireTips(){
   let tip = document.getElementById("tip");
@@ -453,7 +423,6 @@ function wirePicker(slot){
   wirePicker("A"); wirePicker("B");
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
     paint("A"); paint("B"); render(); renderRankings(); });
-  const any = DATA[TEAMS[0]].offense;
   // NFL Week 1 opens the Thursday after Labor Day (the first Monday of September),
   // and weeks run Thursday to Wednesday.
   (function seasonWeek(){
@@ -465,14 +434,11 @@ function wirePicker(slot){
     const wk = Math.floor((now - kick) / 6048e5) + 1;
     const label = wk < 1 ? "Preseason" : wk > 18 ? "Postseason" : "Week " + wk;
     document.getElementById("weeklabel").innerHTML = `${yr} <s>|</s> ${label}`;
-    document.getElementById("m-season").textContent = yr + " regular season";
   })();
   document.getElementById("nfllogo").src = NFL_LOGO;
-  document.getElementById("m-date").textContent = "data " + any.scraped_on;
   render();
   bindRankings();
   wireTips();
-  sampleNote();
   renderRankings();
 })();
 </script>

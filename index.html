@@ -42,7 +42,7 @@ h1{font-family:"Archivo",system-ui,-apple-system,sans-serif;font-weight:700;font
 .sub{color:var(--muted);font-size:14px;margin:4px 0 0}
 .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:13px;color:var(--faint);letter-spacing:.02em;
   font-family:"Public Sans",system-ui,-apple-system,sans-serif}
-header{border-bottom:2px solid var(--line-strong);padding-bottom:20px;margin-bottom:24px}
+header{border-bottom:2px solid var(--line-strong);padding-bottom:18px;margin-bottom:26px}
 
 .warn{display:flex;gap:11px;align-items:flex-start;background:var(--sunk);
   border-left:3px solid var(--a);padding:12px 15px;margin-bottom:26px;font-size:13.5px;color:var(--muted)}
@@ -325,15 +325,15 @@ table.model tr.rks td.t4 span,table.model tr.rks td.t5 span{color:var(--tier-fg)
 </style>
 <style>
 .brand{display:flex;align-items:center;gap:15px}
-.brand img{width:52px;height:52px;object-fit:contain;flex:none}
+.brand img{width:88px;height:88px;object-fit:contain;flex:none}
 .brandtext{min-width:0}
-h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:clamp(27px,4.4vw,38px);
+h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:clamp(30px,5.2vw,46px);
   letter-spacing:-.02em;margin:0;text-wrap:balance;text-transform:uppercase;line-height:1}
 .week{display:inline-flex;align-items:center;gap:7px;margin-top:7px;font-family:"Archivo",system-ui,sans-serif;
   font-weight:600;font-size:12.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink);
   background:var(--sunk);border:1px solid var(--line-strong);border-radius:2px;padding:4px 10px}
 .week s{text-decoration:none;color:var(--faint)}
-@media (max-width:520px){.brand img{width:40px;height:40px}.brand{gap:11px}}
+@media (max-width:520px){.brand img{width:58px;height:58px}.brand{gap:12px}}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -349,17 +349,11 @@ h1{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:clamp(27
   <div class="brand">
     <img src="" id="nfllogo" alt="NFL">
     <div class="brandtext">
-      <h1>Prezbo Model</h1>
+      <h1>Prezbo's Model</h1>
       <div class="week" id="weeklabel"></div>
     </div>
   </div>
-  <p class="sub">Rushing offense against rushing defense — stats over ranks, both directions of the matchup.</p>
-  <div class="meta">
-    <span id="m-season"></span><span id="m-date"></span><span id="m-src">FTN · statshub + Stats iQ</span>
-  </div>
 </header>
-
-<div class="warn" id="warn" hidden><div id="warntext"></div></div>
 
 <div class="tabs" role="tablist">
   <button class="tab" id="tab-matchup" role="tab" aria-selected="true" aria-controls="view-matchup">Matchup</button>
@@ -552,30 +546,6 @@ const DEFS = {
   crt_pct:["Creation Rate","Share of rushing yards that came after contact."],
   aryoe:["Rush Yards Over Expected","Yards above what an average back would get. Not published yet this season."],
 };
-
-// Computed rather than hardcoded so a live page can't drift out of date.
-function sampleNote(){
-  const gp = Object.values(DATA).map(v=>v.offense.games).filter(Boolean);
-  if (!gp.length) return;
-  const lo = Math.min(...gp), hi = Math.max(...gp);
-  if (hi >= 8) return;                    // by then the numbers stand on their own
-  let worst = null;
-  for (const [t,v] of Object.entries(DATA)) {
-    const o = v.offense;
-    if (!o.long_run || !o.rushing_yards) continue;
-    const share = o.long_run / o.rushing_yards;
-    if (!worst || share > worst.share) worst = {t, share, long:o.long_run};
-  }
-  const games = lo === hi ? `${hi} games` : `${lo}-${hi} games`;
-  const tail = worst ? ` ${NAMES[worst.t]} have gained ${Math.round(worst.share*100)}% of their
-    season rushing yards on a single ${worst.long}-yard carry.` : "";
-  const box = document.getElementById("warn");
-  if (!box) return;
-  document.getElementById("warntext").innerHTML =
-    `<b>${games} of data.</b> At this sample size one long run reorders the board.${tail}
-     Read direction, not magnitude, until about Week 6.`;
-  box.hidden = false;
-}
 
 function wireTips(){
   let tip = document.getElementById("tip");
@@ -832,7 +802,6 @@ function wirePicker(slot){
   wirePicker("A"); wirePicker("B");
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
     paint("A"); paint("B"); render(); renderRankings(); });
-  const any = DATA[TEAMS[0]].offense;
   // NFL Week 1 opens the Thursday after Labor Day (the first Monday of September),
   // and weeks run Thursday to Wednesday.
   (function seasonWeek(){
@@ -844,14 +813,11 @@ function wirePicker(slot){
     const wk = Math.floor((now - kick) / 6048e5) + 1;
     const label = wk < 1 ? "Preseason" : wk > 18 ? "Postseason" : "Week " + wk;
     document.getElementById("weeklabel").innerHTML = `${yr} <s>|</s> ${label}`;
-    document.getElementById("m-season").textContent = yr + " regular season";
   })();
   document.getElementById("nfllogo").src = NFL_LOGO;
-  document.getElementById("m-date").textContent = "data " + any.scraped_on;
   render();
   bindRankings();
   wireTips();
-  sampleNote();
   renderRankings();
 })();
 

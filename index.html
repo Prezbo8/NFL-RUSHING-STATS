@@ -252,30 +252,6 @@ th[data-def]:hover,th[data-def]:focus-visible{color:var(--ink)}
 /* Rank tiers: 1-5 neon green, 6-10 green, 11-15 light green,
    16-25 light red, 26-32 red. Shared by the rankings table and the
    RANK rows on the matchup tab. */
-:root{
-  --t1-bg:rgba(0,214,102,.46); --t1-fg:#04371a;
-  --t2-bg:rgba(0,190,96,.26);  --t2-fg:#0a4522;
-  --t3-bg:rgba(0,180,96,.20);  --t3-fg:#14512c;
-  --t4-bg:rgba(235,185,20,.34); --t4-fg:#63490a;
-  --t5-bg:rgba(214,48,38,.30); --t5-fg:#5c1410;
-  --tier-fg:#12181B;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
-  --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
-  --t3-bg:rgba(52,196,120,.20); --t3-fg:#82c7a1;
-  --t4-bg:rgba(250,205,60,.28);  --t4-fg:#f2d075;
-  --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
-  --tier-fg:#FFFFFF;
-}}
-:root[data-theme="dark"]{
-  --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
-  --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
-  --t3-bg:rgba(52,196,120,.20); --t3-fg:#82c7a1;
-  --t4-bg:rgba(250,205,60,.28);  --t4-fg:#f2d075;
-  --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
-  --tier-fg:#FFFFFF;
-}
 td.t1 span{background:var(--t1-bg);color:var(--tier-fg)}
 td.t2 span{background:var(--t2-bg);color:var(--tier-fg)}
 td.t3 span{background:var(--t3-bg);color:var(--tier-fg)}
@@ -383,6 +359,36 @@ table.model th:not(.side){text-align:center}
 .edgerow.even .en{color:var(--faint);font-weight:500}
 @media (max-width:620px){.edgerow{grid-template-columns:78px 1fr 42px;gap:8px;font-size:13px}
   .edgerow .er{display:none}.edgehead .dirs{margin-left:0;width:100%}}
+</style>
+<style>
+/* Rank tiers as an ordered ramp rather than five unrelated colours.
+   One green hue stepping down in strength across 1-5 / 6-10 / 11-15, then a
+   hue shift to amber and red for the bottom two. Strength tracks distance from
+   average, so the middle tier is the quietest cell in the row. */
+:root{
+  --t1-bg:#8FDCAB; --t2-bg:#BCE8CB; --t3-bg:#E4F0E8;
+  --t4-bg:#F9DFA6; --t5-bg:#F2B9B1; --tier-fg:#101619;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --t1-bg:#137A43; --t2-bg:#175C39; --t3-bg:#1D4030;
+  --t4-bg:#6A5117; --t5-bg:#8C2F27; --tier-fg:#FFFFFF;
+}}
+:root[data-theme="dark"]{
+  --t1-bg:#137A43; --t2-bg:#175C39; --t3-bg:#1D4030;
+  --t4-bg:#6A5117; --t5-bg:#8C2F27; --tier-fg:#FFFFFF;
+}
+td.t1 span{background:var(--t1-bg);color:var(--tier-fg)}
+td.t2 span{background:var(--t2-bg);color:var(--tier-fg)}
+td.t3 span{background:var(--t3-bg);color:var(--tier-fg)}
+td.t4 span{background:var(--t4-bg);color:var(--tier-fg)}
+td.t5 span{background:var(--t5-bg);color:var(--tier-fg)}
+td.t1 span,td.t2 span,td.t3 span,td.t4 span,td.t5 span{font-weight:700}
+tbody td.tm span,tbody td.num span{background:none}
+.tierkey i.t1{background:var(--t1-bg);color:var(--tier-fg)}
+.tierkey i.t2{background:var(--t2-bg);color:var(--tier-fg)}
+.tierkey i.t3{background:var(--t3-bg);color:var(--tier-fg)}
+.tierkey i.t4{background:var(--t4-bg);color:var(--tier-fg)}
+.tierkey i.t5{background:var(--t5-bg);color:var(--tier-fg)}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -646,7 +652,7 @@ function block(team, side, label) {
 // edge grows right, the defence's left — and the ranks behind each gap make
 // the number checkable against the table above.
 function edges(offT, defT) {
-  const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
+  const rows = ["dvoa","succ_pct","aybco","ayaco","stf_pct","exp_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);

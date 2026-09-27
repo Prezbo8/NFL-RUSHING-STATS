@@ -218,7 +218,7 @@ function block(team, side, label) {
 // edge grows right, the defence's left — and the ranks behind each gap make
 // the number checkable against the table above.
 function edges(offT, defT) {
-  const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
+  const rows = ["dvoa","succ_pct","aybco","ayaco","stf_pct","exp_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);

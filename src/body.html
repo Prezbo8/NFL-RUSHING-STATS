@@ -229,14 +229,11 @@ function edges(offT, defT) {
       `<span class="side ${tag==="off"?"o":"d"}${win?" win":""}">
          <b class="tm" style="color:${col}">${team}</b><span class="sd">${tag}</span>
          <span class="rk">#${rank}</span></span>`;
-    const gap = even ? "even"
-      : `<span style="color:${offWin?"var(--tOff)":"var(--tDef)"}">${offWin?offT:defT} +${Math.abs(diff)}</span>`;
     return `<div class="edgerow${even?" even":""}">
       <span class="es">${lab}</span>
       ${side(offT,"off",o.rank,!even&&offWin,"var(--tOff)")}
       <span class="vs">vs</span>
-      ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}
-      <span class="gap">${gap}</span></div>`;
+      ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}</div>`;
   }).join("");
   return `<div class="edgehead">Edges — league rank, offense vs the defense facing it</div>${rows}`;
 }

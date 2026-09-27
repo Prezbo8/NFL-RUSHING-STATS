@@ -368,7 +368,7 @@ tbody td.tm span,tbody td.num span{background:none}
 .edges{min-width:0;flex:1}
 .edgehead{padding:0 8px 10px;font-family:"Archivo",system-ui,sans-serif;font-weight:600;
   font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
-.edgerow{display:grid;grid-template-columns:104px 152px 30px 152px 96px;gap:10px;align-items:center;
+.edgerow{display:grid;grid-template-columns:104px 152px 30px 152px;gap:10px;align-items:center;
   justify-content:start;padding:6px 8px;font-size:15px}
 .edgerow .es{color:var(--muted)}
 .edgerow .side{display:flex;align-items:baseline;gap:6px;white-space:nowrap;opacity:.5}
@@ -379,10 +379,8 @@ tbody td.tm span,tbody td.num span{background:none}
 .edgerow .rk{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
 .edgerow .side.win .rk{font-size:17px}
 .edgerow .vs{text-align:center;font-size:12px;color:var(--faint);letter-spacing:.06em}
-.edgerow .gap{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.edgerow.even .gap{color:var(--faint);font-weight:500}
 @media (max-width:620px){.edgerow{grid-template-columns:74px 1fr 22px 1fr;gap:7px;font-size:13px}
-  .edgerow .gap{display:none}.edgerow .sd{display:none}}
+  .edgerow .sd{display:none}}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -657,14 +655,11 @@ function edges(offT, defT) {
       `<span class="side ${tag==="off"?"o":"d"}${win?" win":""}">
          <b class="tm" style="color:${col}">${team}</b><span class="sd">${tag}</span>
          <span class="rk">#${rank}</span></span>`;
-    const gap = even ? "even"
-      : `<span style="color:${offWin?"var(--tOff)":"var(--tDef)"}">${offWin?offT:defT} +${Math.abs(diff)}</span>`;
     return `<div class="edgerow${even?" even":""}">
       <span class="es">${lab}</span>
       ${side(offT,"off",o.rank,!even&&offWin,"var(--tOff)")}
       <span class="vs">vs</span>
-      ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}
-      <span class="gap">${gap}</span></div>`;
+      ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}</div>`;
   }).join("");
   return `<div class="edgehead">Edges — league rank, offense vs the defense facing it</div>${rows}`;
 }

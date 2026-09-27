@@ -363,6 +363,19 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
 @media (max-width:560px){.edgerow{grid-template-columns:86px 38px 1fr 46px;gap:8px;font-size:13px}}
 </style>
 <style>
+/* Highlighted cells: number centred, colour filling the whole cell rather
+   than sitting in a padded block with uneven top/bottom gaps. */
+table.model tr.rks td{height:1px}                 /* lets the span stretch to the row */
+table.model tr.rks td span{display:flex;align-items:center;justify-content:center;
+  height:100%;min-height:26px;padding:3px 6px;text-align:center}
+table.model tr.vals td:not(.side) span{text-align:center}
+#ranktable tbody td{height:1px}
+#ranktable tbody td:not(.tm):not(.num) span{display:flex;align-items:center;justify-content:center;
+  height:100%;min-height:34px;padding:6px 8px;text-align:center}
+#ranktable thead th:not(.tm):not(.num){text-align:center}
+table.model th:not(.side){text-align:center}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}

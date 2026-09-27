@@ -1,7 +1,13 @@
 <div class="wrap">
 <header>
-  <h1>Run Game Matchup</h1>
-  <p class="sub">Stats over ranks, offense then defense — the RUNNING MODEL layout, both directions of the matchup.</p>
+  <div class="brand">
+    <img src="" id="nfllogo" alt="NFL">
+    <div class="brandtext">
+      <h1>Prezbo Model</h1>
+      <div class="week" id="weeklabel"></div>
+    </div>
+  </div>
+  <p class="sub">Rushing offense against rushing defense — stats over ranks, both directions of the matchup.</p>
   <div class="meta">
     <span id="m-season"></span><span id="m-date"></span><span id="m-src">FTN · statshub + Stats iQ</span>
   </div>
@@ -148,24 +154,24 @@ const ord = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*n%10] || "
 const rkClass = r => r==null ? "" : r<=5 ? "t1" : r<=10 ? "t2" : r<=15 ? "t3" : r<=25 ? "t4" : "t5";
 
 const DEFS = {
-  rushing_yards:["Total Rushing Yards","Season total. Volume, not quality — it rises with how often a team runs."],
-  attempts:["Total Attempts","Season total rushing attempts."],
-  games:["Games Played","Used as the denominator for every per-game figure."],
-  rushing_tds:["Season Rushing TDs","Goal-line opportunity drives this as much as run quality, and the sample is tiny."],
-  yds_gm:["Rush Yards per Game","Attempts multiplied by efficiency, so game script is baked in."],
-  att_gm:["Attempts per Game","Tendency and game script. Says how much a team runs, not how well."],
-  ypc:["Yards per Carry","Rushing yards divided by attempts. Computed from the totals here rather than taken from FTN's displayed column, which is rounded to one decimal."],
-  aybco:["Average Yards Before Contact","Yards gained per attempt before the runner is first contacted. The closest thing here to an offensive line versus front seven measure, and the most transferable across matchups."],
-  ayaco:["Average Yards After Contact","Yards gained per attempt after first contact. Mostly the ball carrier rather than the blocking, so it moves when a back is out."],
-  exp_pct:["Explosive Run Rate","Share of rushing attempts that gain 10 or more yards."],
-  succ_pct:["Rushing Success Rate","Share of attempts that count as a success for the down and distance. The most stable stat on this page at small sample."],
-  stf_pct:["Stuffed Run Rate","Share of attempts stopped at or before the line of scrimmage. For an offense lower is better; for a defense, higher — being stuffed is bad, forcing stuffs is good."],
-  dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for opponent. The only schedule-adjusted number here, so it is the one least distorted by an easy or brutal slate."],
-  epa_att:["Expected Points Added per Attempt","Values each carry by the game situation it happened in, so a 3-yard gain on 3rd-and-2 outranks a 5-yard gain on 3rd-and-8."],
-  ply_gm:["Plays per Game","Offensive plays run per game. For defenses this is plays faced, derived from yards and yards-per-play — FTN publishes no defensive tempo table."],
-  rush_pct:["Rush Rate","Share of offensive plays that are runs. Pure tendency."],
-  crt_pct:["Creation Rate","Share of rushing yards gained after first contact. Fully determined by the two contact splits, so it adds no information of its own."],
-  aryoe:["Average Rush Yards Over Expected","FTN has not populated this for the current season yet."],
+  rushing_yards:["Total Rushing Yards","All rushing yards so far this season."],
+  attempts:["Total Attempts","All rushing attempts so far this season."],
+  games:["Games Played","How many games the team has played."],
+  rushing_tds:["Rushing TDs","Touchdowns scored on the ground this season."],
+  yds_gm:["Rush Yards per Game","Rushing yards divided by games played."],
+  att_gm:["Attempts per Game","How many times a team runs it per game."],
+  ypc:["Yards per Carry","Average yards gained on a run."],
+  aybco:["Yards Before Contact","Average yards gained before anyone touches the runner. Mostly the offensive line."],
+  ayaco:["Yards After Contact","Average yards gained after the first defender arrives. Mostly the running back."],
+  exp_pct:["Explosive Run Rate","How often a run goes for 10+ yards."],
+  succ_pct:["Success Rate","How often a run gains enough for the down and distance."],
+  stf_pct:["Stuffed Run Rate","How often a run is stopped at or behind the line. Low is good for an offense, high for a defense."],
+  dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for who they played."],
+  epa_att:["EPA per Attempt","Points added per carry, counting the situation it happened in."],
+  ply_gm:["Plays per Game","Total offensive plays per game, run and pass."],
+  rush_pct:["Rush Rate","Share of a team's plays that are runs."],
+  crt_pct:["Creation Rate","Share of rushing yards that came after contact."],
+  aryoe:["Rush Yards Over Expected","Yards above what an average back would get. Not published yet this season."],
 };
 
 // Computed rather than hardcoded so a live page can't drift out of date.
@@ -448,7 +454,20 @@ function wirePicker(slot){
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
     paint("A"); paint("B"); render(); renderRankings(); });
   const any = DATA[TEAMS[0]].offense;
-  document.getElementById("m-season").textContent = "2026 regular season";
+  // NFL Week 1 opens the Thursday after Labor Day (the first Monday of September),
+  // and weeks run Thursday to Wednesday.
+  (function seasonWeek(){
+    const now = new Date();
+    const yr = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+    const sep = new Date(yr, 8, 1);
+    while (sep.getDay() !== 1) sep.setDate(sep.getDate() + 1);   // first Monday
+    const kick = new Date(sep); kick.setDate(kick.getDate() + 3); // that Thursday
+    const wk = Math.floor((now - kick) / 6048e5) + 1;
+    const label = wk < 1 ? "Preseason" : wk > 18 ? "Postseason" : "Week " + wk;
+    document.getElementById("weeklabel").innerHTML = `${yr} <s>|</s> ${label}`;
+    document.getElementById("m-season").textContent = yr + " regular season";
+  })();
+  document.getElementById("nfllogo").src = NFL_LOGO;
   document.getElementById("m-date").textContent = "data " + any.scraped_on;
   render();
   bindRankings();

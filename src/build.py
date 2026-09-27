@@ -8,7 +8,7 @@ import pathlib, json, re
 sc = pathlib.Path(__file__).parent
 repo = sc.parent
 head=(sc/"head.html").read_text(); body=(sc/"body.html").read_text()
-logos=(sc/"logos_data.json").read_text(); colors=(sc/"colors.json").read_text().replace("\n","")
+logos=(sc/"logos_data.json").read_text(); nfl=(sc/"nfl_logo.json").read_text().strip(); colors=(sc/"colors.json").read_text().replace("\n","")
 # anon key is public by design (read-only under RLS); it already ships in index.html
 anon=re.search(r'SUPABASE_ANON="([^"]+)"', (repo/"index.html").read_text()).group(1)
 data=json.load(open(sc/"matchup_data.json"))
@@ -32,8 +32,8 @@ live = f"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Run Game Matchup</title>
-<meta name="description" content="NFL rushing offense vs rushing defense, live from FTN data.">
+<title>Prezbo Model</title>
+<meta name="description" content="Prezbo Model — NFL rushing offense vs rushing defense, live from FTN data.">
 {fontlink}
 <style>:root{{color-scheme:light dark}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
 {styles}
@@ -49,6 +49,7 @@ live = f"""<!doctype html>
 {markup}</div>
 <script>
 const LOGOS={logos};
+const NFL_LOGO={nfl};
 const COLORS={colors};
 const META={json.dumps(meta,separators=(',',':'))};
 const SUPABASE_URL="https://mfliuasrygxkembqmrkr.supabase.co";

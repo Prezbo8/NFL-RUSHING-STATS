@@ -302,3 +302,17 @@ tbody td.tm span,tbody td.num span{background:none}
 table.model tr.rks td.t1 span,table.model tr.rks td.t2 span,table.model tr.rks td.t3 span,
 table.model tr.rks td.t4 span,table.model tr.rks td.t5 span{color:var(--tier-fg);font-weight:700}
 </style>
+<style>
+/* Ghosted team logo, sized to bleed off the right edge of the panel's
+   header and footer bands. Kept out of the data table, where a watermark
+   behind translucent tier fills just reads as smudge. */
+.phead,.panelfoot{position:relative;overflow:hidden}
+.phead{padding-right:132px}
+.ghost{position:absolute;right:-34px;top:50%;transform:translateY(-50%);
+  width:168px;height:168px;object-fit:contain;pointer-events:none;user-select:none;opacity:.11}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ghost{opacity:.16}}
+:root[data-theme="dark"] .ghost{opacity:.16}
+.panelfoot{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:4px}
+.panelfoot .edgestrip{padding-top:12px}
+@media (max-width:720px){.ghost{width:118px;right:-28px}.phead{padding-right:86px}}
+</style>

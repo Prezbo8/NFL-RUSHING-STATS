@@ -310,6 +310,20 @@ table.model tr.rks td.t1 span,table.model tr.rks td.t2 span,table.model tr.rks t
 table.model tr.rks td.t4 span,table.model tr.rks td.t5 span{color:var(--tier-fg);font-weight:700}
 </style>
 <style>
+/* Ghosted team logo, sized to bleed off the right edge of the panel's
+   header and footer bands. Kept out of the data table, where a watermark
+   behind translucent tier fills just reads as smudge. */
+.phead,.panelfoot{position:relative;overflow:hidden}
+.phead{padding-right:132px}
+.ghost{position:absolute;right:-34px;top:50%;transform:translateY(-50%);
+  width:168px;height:168px;object-fit:contain;pointer-events:none;user-select:none;opacity:.11}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ghost{opacity:.16}}
+:root[data-theme="dark"] .ghost{opacity:.16}
+.panelfoot{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:4px}
+.panelfoot .edgestrip{padding-top:12px}
+@media (max-width:720px){.ghost{width:118px;right:-28px}.phead{padding-right:86px}}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -615,13 +629,17 @@ function panel(offT, defT) {
       <div class="ptitle"><img src="${LOGOS[offT]}" alt=""><span class="o">${NAMES[offT]}</span> run offense
         <span style="color:var(--faint)">vs</span> <img src="${LOGOS[defT]}" alt=""><span class="d">${NAMES[defT]}</span> run defense</div>
       <div class="verdict">Core stats: ${word}${who}</div>
+      <img class="ghost" src="${LOGOS[offT]}" alt="" aria-hidden="true">
     </div>
     <div class="tier">
       <div class="block"><table class="model">
         ${block(offT,"offense","Offense")}
         ${block(defT,"defense","Defense")}
       </table></div>
-      <div class="edgestrip">${edges(offT,defT)}</div>
+      <div class="panelfoot">
+        <div class="edgestrip">${edges(offT,defT)}</div>
+        <img class="ghost" src="${LOGOS[defT]}" alt="" aria-hidden="true">
+      </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game
         that actually works — the rest is texture.</p>
     </div>

@@ -263,13 +263,17 @@ function panel(offT, defT) {
       <div class="ptitle"><img src="${LOGOS[offT]}" alt=""><span class="o">${NAMES[offT]}</span> run offense
         <span style="color:var(--faint)">vs</span> <img src="${LOGOS[defT]}" alt=""><span class="d">${NAMES[defT]}</span> run defense</div>
       <div class="verdict">Core stats: ${word}${who}</div>
+      <img class="ghost" src="${LOGOS[offT]}" alt="" aria-hidden="true">
     </div>
     <div class="tier">
       <div class="block"><table class="model">
         ${block(offT,"offense","Offense")}
         ${block(defT,"defense","Defense")}
       </table></div>
-      <div class="edgestrip">${edges(offT,defT)}</div>
+      <div class="panelfoot">
+        <div class="edgestrip">${edges(offT,defT)}</div>
+        <img class="ghost" src="${LOGOS[defT]}" alt="" aria-hidden="true">
+      </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game
         that actually works — the rest is texture.</p>
     </div>

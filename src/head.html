@@ -375,3 +375,37 @@ tbody td.tm span,tbody td.num span{background:none}
 @media (max-width:620px){.edgerow{grid-template-columns:74px 1fr 22px 1fr;gap:7px;font-size:13px}
   .edgerow .sd{display:none}}
 </style>
+<style>
+.tickers{display:flex;flex-direction:column;gap:6px;margin:0 0 26px}
+.tick{display:flex;align-items:stretch;border:1px solid var(--line);background:var(--surface);
+  border-radius:2px;overflow:hidden}
+.ticklabel{display:flex;align-items:center;gap:6px;flex:none;padding:7px 12px;
+  font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;white-space:nowrap;border-right:1px solid var(--line);background:var(--sunk)}
+.tick.hot .ticklabel{color:#E4682E}
+.tick.cold .ticklabel{color:#3D8FC4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#FF8A4C}
+  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#5FB4E6}}
+:root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
+:root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
+.tickwrap{position:relative;flex:1;min-width:0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.ticktrack{display:inline-flex;align-items:center;gap:0;white-space:nowrap;padding:7px 0;
+  will-change:transform;animation:marquee linear infinite}
+.tick:hover .ticktrack,.tick:focus-within .ticktrack{animation-play-state:paused}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticktrack{animation:none}
+  .tickwrap{overflow-x:auto;-webkit-mask-image:none;mask-image:none}}
+.tickgrp{display:inline-flex;align-items:center;gap:9px;padding:0 20px;
+  border-right:1px solid var(--line)}
+.tickstat{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.tickitem{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-variant-numeric:tabular-nums}
+.tickitem img{width:15px;height:15px;object-fit:contain}
+.tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:12.5px}
+.tickitem span{color:var(--ink);font-weight:600}
+.tickitem i{font-style:normal;color:var(--faint);font-size:11px}
+@media (max-width:620px){.ticklabel{font-size:9.5px;padding:6px 9px;letter-spacing:.06em}
+  .tickitem{font-size:12px}}
+</style>

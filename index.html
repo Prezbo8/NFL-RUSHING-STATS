@@ -383,6 +383,40 @@ tbody td.tm span,tbody td.num span{background:none}
   .edgerow .sd{display:none}}
 </style>
 <style>
+.tickers{display:flex;flex-direction:column;gap:6px;margin:0 0 26px}
+.tick{display:flex;align-items:stretch;border:1px solid var(--line);background:var(--surface);
+  border-radius:2px;overflow:hidden}
+.ticklabel{display:flex;align-items:center;gap:6px;flex:none;padding:7px 12px;
+  font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;white-space:nowrap;border-right:1px solid var(--line);background:var(--sunk)}
+.tick.hot .ticklabel{color:#E4682E}
+.tick.cold .ticklabel{color:#3D8FC4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#FF8A4C}
+  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#5FB4E6}}
+:root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
+:root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
+.tickwrap{position:relative;flex:1;min-width:0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 22px,#000 calc(100% - 22px),transparent)}
+.ticktrack{display:inline-flex;align-items:center;gap:0;white-space:nowrap;padding:7px 0;
+  will-change:transform;animation:marquee linear infinite}
+.tick:hover .ticktrack,.tick:focus-within .ticktrack{animation-play-state:paused}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticktrack{animation:none}
+  .tickwrap{overflow-x:auto;-webkit-mask-image:none;mask-image:none}}
+.tickgrp{display:inline-flex;align-items:center;gap:9px;padding:0 20px;
+  border-right:1px solid var(--line)}
+.tickstat{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--faint)}
+.tickitem{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-variant-numeric:tabular-nums}
+.tickitem img{width:15px;height:15px;object-fit:contain}
+.tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:12.5px}
+.tickitem span{color:var(--ink);font-weight:600}
+.tickitem i{font-style:normal;color:var(--faint);font-size:11px}
+@media (max-width:620px){.ticklabel{font-size:9.5px;padding:6px 9px;letter-spacing:.06em}
+  .tickitem{font-size:12px}}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -411,6 +445,8 @@ tbody td.tm span,tbody td.num span{background:none}
   <button class="tab" id="tab-matchup" role="tab" aria-selected="true" aria-controls="view-matchup">Matchup</button>
   <button class="tab" id="tab-rankings" role="tab" aria-selected="false" aria-controls="view-rankings">Rankings</button>
 </div>
+
+<div class="tickers" id="tickers"></div>
 
 <div id="view-matchup" role="tabpanel" aria-labelledby="tab-matchup">
 <div class="pickers">
@@ -598,6 +634,58 @@ const DEFS = {
   crt_pct:["Creation Rate","Share of rushing yards that came after contact."],
   aryoe:["Rush Yards Over Expected","Yards above what an average back would get. Not published yet this season."],
 };
+
+// Four marquees: best and worst five in each of six stats, for each side of
+// the ball. The track holds the content twice so the loop is seamless, and the
+// duration scales with width to keep every ticker at the same speed.
+const TICK_STATS = [
+  {k:"yds_gm",   label:"Yds/Gm", dp:1},
+  {k:"succ_pct", label:"Succ %", dp:1},
+  {k:"aybco",    label:"aYBCO",  dp:2},
+  {k:"ayaco",    label:"aYACO",  dp:2},
+  {k:"stf_pct",  label:"Stf %",  dp:1},
+  {k:"exp_pct",  label:"Exp %",  dp:1},
+];
+
+function tickerGroups(side, best) {
+  return TICK_STATS.map(st=>{
+    const col = COLS.find(c=>c.k===st.k) || RANK_COLS.find(c=>c.k===st.k);
+    const high = side==="offense" ? col.offHigh : col.defHigh;
+    const rows = TEAMS.map(t=>({t, v:DATA[t][side][st.k]})).filter(o=>o.v!=null)
+      .sort((a,b)=> high ? b.v-a.v : a.v-b.v);
+    const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
+    const items = pick.map((o,i)=>{
+      const rank = best ? i+1 : rows.length-i;
+      return `<span class="tickitem"><img src="${LOGOS[o.t]}" alt="">
+        <b style="color:${tc(o.t)}">${o.t}</b><span>${o.v.toFixed(st.dp)}</span>
+        <i>#${rank}</i></span>`;
+    }).join("");
+    return `<span class="tickgrp"><span class="tickstat">${st.label}</span>${items}</span>`;
+  }).join("");
+}
+
+function buildTickers() {
+  const defs = [
+    {side:"offense", best:true,  cls:"hot",  label:"Rushing Offense · Top 5 \u{1F525}"},
+    {side:"offense", best:false, cls:"cold", label:"Rushing Offense · Bottom 5 \u{2744}\u{FE0F}"},
+    {side:"defense", best:true,  cls:"hot",  label:"Rushing Defense · Top 5 \u{1F525}"},
+    {side:"defense", best:false, cls:"cold", label:"Rushing Defense · Bottom 5 \u{2744}\u{FE0F}"},
+  ];
+  document.getElementById("tickers").innerHTML = defs.map(d=>{
+    const inner = tickerGroups(d.side, d.best);
+    return `<div class="tick ${d.cls}">
+      <span class="ticklabel">${d.label}</span>
+      <div class="tickwrap"><div class="ticktrack">${inner}${inner}</div></div></div>`;
+  }).join("");
+
+  // one speed for all four, regardless of how wide each track ends up
+  requestAnimationFrame(()=>{
+    for (const tr of document.querySelectorAll(".ticktrack")) {
+      const px = tr.scrollWidth / 2;
+      tr.style.animationDuration = Math.max(28, Math.round(px / 42)) + "s";
+    }
+  });
+}
 
 function wireTips(){
   let tip = document.getElementById("tip");
@@ -904,6 +992,7 @@ function wirePicker(slot){
   render();
   bindRankings();
   wireTips();
+  buildTickers();
   renderRankings();
 })();
 

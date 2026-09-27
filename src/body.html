@@ -122,9 +122,10 @@ const COLS = [
   {k:"stf_pct",       label:"Stf<br>%",         dp:1, offHigh:false, defHigh:true},
   {k:"dvoa",          label:"DVOA",             dp:1, offHigh:true,  defHigh:false},
   {k:"epa_att",       label:"EPA<br>/Att",      dp:3, offHigh:true,  defHigh:false},
-  // season totals sit at the end: context, not a read
-  {k:"rushing_yards", label:"Tot<br>Yds",       dp:0, norank:true},
-  {k:"attempts",      label:"Tot<br>Att",       dp:0, norank:true},
+  // Season totals. Ranked, but note they are not games-adjusted: a team that
+  // has played an extra game climbs here on volume alone.
+  {k:"rushing_yards", label:"Tot<br>Yds",       dp:0, offHigh:true,  defHigh:false},
+  {k:"attempts",      label:"Tot<br>Att",       dp:0, offHigh:true,  defHigh:false},
 ];
 
 const RANK = {};

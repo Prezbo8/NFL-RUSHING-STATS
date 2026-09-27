@@ -106,6 +106,12 @@ python3 scrape_ftn_rushing.py                    # fetch + write
 python3 rebuild_view.py                          # after adding columns
 ```
 
+## Building the page
+
+`index.html` is **generated** — edit `src/head.html` (styles) or `src/body.html` (markup and
+logic), then run `python src/build.py`. Editing `index.html` directly gets overwritten on the
+next build, and has already caused two regressions where a fix was silently reverted.
+
 ## Live dashboard
 
 `index.html` is served from GitHub Pages and reads Supabase directly, so it is always current

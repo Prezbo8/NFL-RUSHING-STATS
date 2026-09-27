@@ -1,0 +1,453 @@
+<div class="wrap">
+<header>
+  <h1>Run Game Matchup</h1>
+  <p class="sub">Stats over ranks, offense then defense — the RUNNING MODEL layout, both directions of the matchup.</p>
+  <div class="meta">
+    <span id="m-season"></span><span id="m-date"></span><span id="m-src">FTN · statshub + Stats iQ</span>
+  </div>
+</header>
+
+<div class="warn" id="warn" hidden><div id="warntext"></div></div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" id="tab-matchup" role="tab" aria-selected="true" aria-controls="view-matchup">Matchup</button>
+  <button class="tab" id="tab-rankings" role="tab" aria-selected="false" aria-controls="view-rankings">Rankings</button>
+</div>
+
+<div id="view-matchup" role="tabpanel" aria-labelledby="tab-matchup">
+<div class="pickers">
+  <div class="pick a" id="pickA">
+    <label for="teamA">Team A</label>
+    <div class="field"><img id="logoA" alt=""><input id="teamA" type="text" autocomplete="off"
+      role="combobox" aria-expanded="false" aria-controls="listA" placeholder="Type a team..."></div>
+    <div class="combo" id="listA" role="listbox" hidden></div>
+  </div>
+  <div class="vs">VS</div>
+  <div class="pick b" id="pickB">
+    <label for="teamB">Team B</label>
+    <div class="field"><img id="logoB" alt=""><input id="teamB" type="text" autocomplete="off"
+      role="combobox" aria-expanded="false" aria-controls="listB" placeholder="Type a team..."></div>
+    <div class="combo" id="listB" role="listbox" hidden></div>
+  </div>
+</div>
+
+<div id="panels"></div>
+</div>
+
+<div id="view-rankings" role="tabpanel" aria-labelledby="tab-rankings" hidden>
+  <div class="sidebar-row">
+    <div class="seg">
+      <button id="side-off" aria-pressed="true">Rushing offense</button>
+      <button id="side-def" aria-pressed="false">Rushing defense</button>
+    </div>
+    <div class="hint" id="sorthint"></div>
+  </div>
+  <div class="tablewrap"><table id="ranktable"><thead><tr id="rankhead"></tr></thead><tbody id="rankbody"></tbody></table></div>
+</div>
+
+<footer>
+  <h2>Reading this page</h2>
+  <ul>
+    <li><b>Each block reads like the RUNNING MODEL tab</b> — a stats row for the team with its
+      league RANK directly underneath. Ranks are green in the top 10, red in the bottom 10. Totals,
+      attempts and games carry no rank, same as the sheet.</li>
+    <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
+      and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
+    <li><b>The chips</b> under each block are percentile gaps between the offense and the defense facing
+      it, so a rushing offense's DVOA and a defense's DVOA allowed become comparable. Positive favors
+      the offense; under 8 points reads as even.</li>
+    <li><code>aYBCO + aYACO</code> does <b>not</b> equal <code>YPC</code> here — FTN's contact splits and
+      the statshub attempt counts cover different play universes, differing by about 0.9 yds/att.
+      YPC is computed from attempts and yards.</li>
+    <li>In <b>Rankings</b>, the first click on a column sorts best-first and knows which way each stat
+      runs — on defense, low DVOA and low yards allowed are good, while a high stuff rate is good.
+      Click again to reverse. Shading tracks league percentile, so the strongest cells read darkest.</li>
+    <li><code>CRT%</code> is omitted: it is exactly <code>aYACO / (aYBCO + aYACO)</code> and adds nothing.
+      <code>aRYOE</code> is omitted because FTN has not populated it this season yet.</li>
+  </ul>
+</footer>
+</div>
+
+<script>
+const NAMES = Object.fromEntries(Object.entries(DATA).map(([k,v])=>[k, v.city+" "+v.name]));
+const TEAMS = Object.keys(DATA).sort((x,y)=>NAMES[x].localeCompare(NAMES[y]));
+
+for (const t of TEAMS) for (const side of ["offense","defense"]) {
+  const r = DATA[t][side];
+  r.att_gm = r.attempts / r.games;
+  r.yds_gm = r.rushing_yards / r.games;
+}
+
+function hexToHsl(h){
+  const n = parseInt(h.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let hu=0, s=0;
+  if (mx!==mn){ const d=mx-mn; s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
+    hu = mx===r ? (g-b)/d+(g<b?6:0) : mx===g ? (b-r)/d+2 : (r-g)/d+4; hu/=6; }
+  return [hu*360, s*100, l*100];
+}
+function hslToHex(h,s,l){
+  s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)))));
+  return "#"+[f(0),f(8),f(4)].map(v=>v.toString(16).padStart(2,"0")).join("");
+}
+// Many NFL primaries are near-black (Raiders, Bears, Texans) or pale (Saints, Steelers gold).
+// Clamp lightness per theme so every team stays legible on both grounds.
+function teamColor(hex, dark){
+  let [h,s,l] = hexToHsl(hex);
+  if (s < 12) s = 12;                              // pure black/white would render as flat grey
+  if (dark) l = Math.min(Math.max(l, 58), 78);
+  else      l = Math.min(Math.max(l, 26), 42);
+  return hslToHex(h, s, l);
+}
+const CLIGHT = {}, CDARK = {};
+for (const t of Object.keys(COLORS)) { CLIGHT[t] = teamColor(COLORS[t], false); CDARK[t] = teamColor(COLORS[t], true); }
+const isDark = () => {
+  const ex = document.documentElement.getAttribute("data-theme");
+  return ex ? ex === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+};
+const tc = t => (isDark() ? CDARK : CLIGHT)[t];
+
+// Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
+// per-play stats that carry a RANK row underneath, exactly as the sheet has it.
+const COLS = [
+  {k:"rushing_yards", label:"Tot<br>Yds",   dp:0, norank:true},
+  {k:"attempts",      label:"Tot<br>Att",     dp:0, norank:true},
+  {k:"games",         label:"G",   dp:0, norank:true},
+  {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
+  {k:"yds_gm",        label:"Yds<br>/Gm", dp:1, offHigh:true,  defHigh:false},
+  {k:"att_gm",        label:"Att<br>/Gm",      dp:1, offHigh:true,  defHigh:false},
+  {k:"ypc",           label:"YPC", dp:2, offHigh:true,  defHigh:false},
+  {k:"aybco",         label:"aYBCO", dp:2, offHigh:true, defHigh:false},
+  {k:"ayaco",         label:"aYACO",  dp:2, offHigh:true, defHigh:false},
+  {k:"exp_pct",       label:"Exp<br>%",   dp:1, offHigh:true, defHigh:false},
+  {k:"succ_pct",      label:"Succ<br>%",  dp:1, offHigh:true,  defHigh:false},
+  {k:"stf_pct",       label:"Stf<br>%",  dp:1, offHigh:false, defHigh:true},
+  {k:"dvoa",          label:"DVOA",             dp:1, offHigh:true,  defHigh:false},
+  {k:"epa_att",       label:"EPA<br>/Att",     dp:3, offHigh:true,  defHigh:false},
+];
+
+const RANK = {};
+for (const side of ["offense","defense"]) {
+  RANK[side] = {};
+  for (const c of COLS) {
+    if (c.norank) continue;
+    const vals = TEAMS.map(t=>({t, v:DATA[t][side][c.k]})).filter(o=>o.v!=null);
+    const high = side==="offense" ? c.offHigh : c.defHigh;
+    vals.sort((p,q)=> high ? q.v-p.v : p.v-q.v);
+    const m = {};
+    vals.forEach((o,i)=>{ m[o.t] = {rank:i+1, pct: vals.length>1 ? (vals.length-1-i)/(vals.length-1)*100 : 50}; });
+    RANK[side][c.k] = m;
+  }
+}
+
+const fmt = (v,dp)=> v==null ? "—" : v.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const ord = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*n%10] || "th");
+const rkClass = r => r==null ? "" : r<=10 ? "rk-good" : r>=23 ? "rk-bad" : "";
+
+const DEFS = {
+  rushing_yards:["Total Rushing Yards","Season total. Volume, not quality — it rises with how often a team runs."],
+  attempts:["Total Attempts","Season total rushing attempts."],
+  games:["Games Played","Used as the denominator for every per-game figure."],
+  rushing_tds:["Season Rushing TDs","Goal-line opportunity drives this as much as run quality, and the sample is tiny."],
+  yds_gm:["Rush Yards per Game","Attempts multiplied by efficiency, so game script is baked in."],
+  att_gm:["Attempts per Game","Tendency and game script. Says how much a team runs, not how well."],
+  ypc:["Yards per Carry","Rushing yards divided by attempts. Computed from the totals here rather than taken from FTN's displayed column, which is rounded to one decimal."],
+  aybco:["Average Yards Before Contact","Yards gained per attempt before the runner is first contacted. The closest thing here to an offensive line versus front seven measure, and the most transferable across matchups."],
+  ayaco:["Average Yards After Contact","Yards gained per attempt after first contact. Mostly the ball carrier rather than the blocking, so it moves when a back is out."],
+  exp_pct:["Explosive Run Rate","Share of rushing attempts that gain 10 or more yards."],
+  succ_pct:["Rushing Success Rate","Share of attempts that count as a success for the down and distance. The most stable stat on this page at small sample."],
+  stf_pct:["Stuffed Run Rate","Share of attempts stopped at or before the line of scrimmage. For an offense lower is better; for a defense, higher — being stuffed is bad, forcing stuffs is good."],
+  dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for opponent. The only schedule-adjusted number here, so it is the one least distorted by an easy or brutal slate."],
+  epa_att:["Expected Points Added per Attempt","Values each carry by the game situation it happened in, so a 3-yard gain on 3rd-and-2 outranks a 5-yard gain on 3rd-and-8."],
+  ply_gm:["Plays per Game","Offensive plays run per game. For defenses this is plays faced, derived from yards and yards-per-play — FTN publishes no defensive tempo table."],
+  rush_pct:["Rush Rate","Share of offensive plays that are runs. Pure tendency."],
+  crt_pct:["Creation Rate","Share of rushing yards gained after first contact. Fully determined by the two contact splits, so it adds no information of its own."],
+  aryoe:["Average Rush Yards Over Expected","FTN has not populated this for the current season yet."],
+};
+
+// Computed rather than hardcoded so a live page can't drift out of date.
+function sampleNote(){
+  const gp = Object.values(DATA).map(v=>v.offense.games).filter(Boolean);
+  if (!gp.length) return;
+  const lo = Math.min(...gp), hi = Math.max(...gp);
+  if (hi >= 8) return;                    // by then the numbers stand on their own
+  let worst = null;
+  for (const [t,v] of Object.entries(DATA)) {
+    const o = v.offense;
+    if (!o.long_run || !o.rushing_yards) continue;
+    const share = o.long_run / o.rushing_yards;
+    if (!worst || share > worst.share) worst = {t, share, long:o.long_run};
+  }
+  const games = lo === hi ? `${hi} games` : `${lo}-${hi} games`;
+  const tail = worst ? ` ${NAMES[worst.t]} have gained ${Math.round(worst.share*100)}% of their
+    season rushing yards on a single ${worst.long}-yard carry.` : "";
+  const box = document.getElementById("warn");
+  if (!box) return;
+  document.getElementById("warntext").innerHTML =
+    `<b>${games} of data.</b> At this sample size one long run reorders the board.${tail}
+     Read direction, not magnitude, until about Week 6.`;
+  box.hidden = false;
+}
+
+function wireTips(){
+  let tip = document.getElementById("tip");
+  if (!tip) { tip = document.createElement("div"); tip.id = "tip"; document.body.appendChild(tip); }
+  const show = el => {
+    const d = DEFS[el.dataset.def]; if (!d) return;
+    tip.innerHTML = `<b>${d[0]}</b>${d[1]}`;
+    tip.classList.add("on");
+    const r = el.getBoundingClientRect();
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const t = tip.getBoundingClientRect();
+    let x = r.left + r.width/2 - t.width/2;
+    x = Math.max(10, Math.min(x, innerWidth - t.width - 10));
+    let y = r.bottom + 8;
+    if (y + t.height > innerHeight - 10) y = r.top - t.height - 8;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  };
+  const hide = () => tip.classList.remove("on");
+  for (const ev of ["mouseover","focusin"])
+    document.addEventListener(ev, e => {
+      const el = e.target.closest?.("th[data-def]");
+      el ? show(el) : hide();
+    });
+  for (const ev of ["mouseout","focusout","scroll"]) document.addEventListener(ev, hide, true);
+}
+
+function block(team, side, label) {
+  const row = DATA[team][side];
+  const head = `<tr><th class="side">${label}</th>` +
+    COLS.map(c=>`<th data-def="${c.k}" tabindex="0">${c.label}</th>`).join("") + "</tr>";
+  const vals = `<tr class="vals ${side==="offense"?"off":"def"}">
+      <td class="side"><span><img src="${LOGOS[team]}" alt="">${team}</span></td>` +
+    COLS.map(c=>`<td><span>${fmt(row[c.k], c.dp)}</span></td>`).join("") + "</tr>";
+  const rks = `<tr class="rks"><td class="side"><span>Rank</span></td>` +
+    COLS.map(c=>{
+      if (c.norank) return "<td><span></span></td>";
+      const r = RANK[side][c.k][team];
+      return `<td class="${rkClass(r&&r.rank)}"><span>${r?r.rank:"—"}</span></td>`;
+    }).join("") + "</tr>";
+  return head + vals + rks;
+}
+
+// Percentile gap on the three core stats, offense minus the defense stopping it.
+function edges(offT, defT) {
+  return ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
+    const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
+    if (!o || !d) return null;
+    const gap = Math.round(o.pct - d.pct);
+    const col = COLS.find(c=>c.k===k);
+    const lab = col.label.replace(/<br>\//g,"/").replace(/<br>/g," ");
+    if (Math.abs(gap) < 8) return `<span class="echip">${lab} <b>even</b></span>`;
+    const win = gap > 0 ? offT : defT;
+    const colr = gap > 0 ? "var(--tOff)" : "var(--tDef)";
+    return `<span class="echip on" style="color:${colr}">${lab} <b>${win} ${gap>0?"+":""}${gap}</b></span>`;
+  }).filter(Boolean).join("");
+}
+
+function panel(offT, defT) {
+  let core = 0, n = 0;
+  for (const k of ["dvoa","succ_pct","epa_att"]) {
+    const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
+    if (o && d) { core += o.pct - d.pct; n++; }
+  }
+  const avg = n ? core/n : 0, mag = Math.abs(avg);
+  const word = mag < 8 ? "an even matchup" : mag < 20 ? "a slight edge" : mag < 35 ? "a clear edge" : "a decisive edge";
+  const who = mag < 8 ? "" : ` to <b>${avg > 0 ? NAMES[offT] : NAMES[defT]}</b>`;
+
+  return `<section class="panel" style="--tOff:${tc(offT)};--tDef:${tc(defT)}">
+    <div class="phead">
+      <div class="ptitle"><img src="${LOGOS[offT]}" alt=""><span class="o">${NAMES[offT]}</span> run offense
+        <span style="color:var(--faint)">vs</span> <img src="${LOGOS[defT]}" alt=""><span class="d">${NAMES[defT]}</span> run defense</div>
+      <div class="verdict">Core stats: ${word}${who}</div>
+    </div>
+    <div class="tier">
+      <div class="block"><table class="model">
+        ${block(offT,"offense","Offense")}
+        ${block(defT,"defense","Defense")}
+      </table></div>
+      <div class="edgestrip">${edges(offT,defT)}</div>
+      <p class="blocknote">Yards before contact and success rate both higher is what marks a run game
+        that actually works — the rest is texture.</p>
+    </div>
+  </section>`;
+}
+
+function render() {
+  const a = SEL.A, b = SEL.B;
+  document.getElementById("panels").innerHTML = panel(a,b) + panel(b,a);
+}
+
+const RANK_COLS = [
+  {k:"games",    label:"GP",      dp:0, neutral:true},
+  {k:"dvoa",     label:"DVOA",    dp:1, offHigh:true,  defHigh:false},
+  {k:"succ_pct", label:"SUCC%",   dp:1, offHigh:true,  defHigh:false},
+  {k:"epa_att",  label:"EPA/ATT", dp:3, offHigh:true,  defHigh:false},
+  {k:"aybco",    label:"aYBCO",   dp:2, offHigh:true,  defHigh:false},
+  {k:"ayaco",    label:"aYACO",   dp:2, offHigh:true,  defHigh:false},
+  {k:"stf_pct",  label:"STF%",    dp:1, offHigh:false, defHigh:true},
+  {k:"exp_pct",  label:"EXP%",    dp:1, offHigh:true,  defHigh:false},
+  {k:"ypc",      label:"YPC",     dp:2, offHigh:true,  defHigh:false},
+  {k:"att_gm",   label:"ATT/GM",  dp:1, neutral:true},
+  {k:"yds_gm",   label:"YDS/GM",  dp:1, offHigh:true,  defHigh:false},
+  {k:"rush_pct", label:"RUSH%",   dp:1, neutral:true},
+  {k:"ply_gm",   label:"PLY/GM",  dp:1, neutral:true},
+];
+
+let rkSide = "offense", rkKey = "dvoa", rkBest = true;
+
+// percentile of a value within its column, oriented so 100 = best
+function pctOf(col, side, team) {
+  const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(v=>v!=null);
+  const v = DATA[team][side][col.k];
+  if (v == null || vals.length < 2) return null;
+  const high = col.neutral ? true : (side==="offense" ? col.offHigh : col.defHigh);
+  const worse = vals.filter(x=> high ? x < v : x > v).length;
+  return worse / (vals.length-1) * 100;
+}
+
+function renderRankings() {
+  const col = RANK_COLS.find(c=>c.k===rkKey);
+  const high = col.neutral ? true : (rkSide==="offense" ? col.offHigh : col.defHigh);
+  // "best first" respects direction; reversed flips it
+  const desc = rkBest ? high : !high;
+  const rows = TEAMS.slice().sort((x,y)=>{
+    const a = DATA[x][rkSide][rkKey], b = DATA[y][rkSide][rkKey];
+    if (a == null) return 1;
+    if (b == null) return -1;
+    return desc ? b-a : a-b;
+  });
+
+  document.getElementById("rankhead").innerHTML =
+    '<th class="num" aria-hidden="true"></th><th class="tm">Team</th>' +
+    RANK_COLS.map(c=>{
+      const on = c.k===rkKey;
+      const sort = on ? ` aria-sort="${desc?"descending":"ascending"}"` : "";
+      return `<th tabindex="0" data-k="${c.k}" data-def="${c.k}"${sort}>${c.label}<span class="ar">${on?(desc?"▼":"▲"):""}</span></th>`;
+    }).join("");
+
+  document.getElementById("rankbody").innerHTML = rows.map((t,i)=>{
+    const cells = RANK_COLS.map(c=>{
+      const v = DATA[t][rkSide][c.k];
+      const p = c.neutral ? null : pctOf(c, rkSide, t);
+      const a = p==null ? 0 : Math.max(0, (p-45)/55) * 0.30;
+      const bg = a > 0.01 ? ` style="background:rgba(var(--heat),${a.toFixed(3)})"` : "";
+      return `<td class="${c.k===rkKey?"lead":""}"><span${bg}>${fmt(v,c.dp)}</span></td>`;
+    }).join("");
+    return `<tr><td class="num"><span>${i+1}</span></td>
+      <td class="tm"><span><img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b></span></td>${cells}</tr>`;
+  }).join("");
+
+  document.getElementById("sorthint").textContent =
+    `sorted by ${col.label} · ${rkBest ? "best first" : "worst first"}`;
+}
+
+function bindRankings() {
+  document.getElementById("rankhead").addEventListener("click", e=>{
+    const th = e.target.closest("th[data-k]"); if (!th) return;
+    if (th.dataset.k === rkKey) rkBest = !rkBest; else { rkKey = th.dataset.k; rkBest = true; }
+    renderRankings();
+  });
+  document.getElementById("rankhead").addEventListener("keydown", e=>{
+    if (e.key!=="Enter" && e.key!==" ") return;
+    const th = e.target.closest("th[data-k]"); if (!th) return;
+    e.preventDefault(); th.click();
+  });
+  for (const [id,side] of [["side-off","offense"],["side-def","defense"]]) {
+    document.getElementById(id).addEventListener("click", ()=>{
+      rkSide = side;
+      document.getElementById("side-off").setAttribute("aria-pressed", side==="offense");
+      document.getElementById("side-def").setAttribute("aria-pressed", side==="defense");
+      renderRankings();
+    });
+  }
+  for (const [tab,view] of [["tab-matchup","view-matchup"],["tab-rankings","view-rankings"]]) {
+    document.getElementById(tab).addEventListener("click", ()=>{
+      const on = view === "view-rankings";
+      document.getElementById("view-matchup").hidden = on;
+      document.getElementById("view-rankings").hidden = !on;
+      document.getElementById("tab-matchup").setAttribute("aria-selected", !on);
+      document.getElementById("tab-rankings").setAttribute("aria-selected", on);
+    });
+  }
+}
+
+const SEL = {A:"BLT", B:"CAR"};
+
+function paint(slot){
+  const t = SEL[slot];
+  const input = document.getElementById("team"+slot);
+  const img = document.getElementById("logo"+slot);
+  input.value = NAMES[t];
+  input.style.setProperty("--tcol", tc(t));
+  img.src = LOGOS[t]; img.alt = NAMES[t] + " logo";
+  document.getElementById("pick"+slot).style.setProperty(slot==="A"?"--ta":"--tb", tc(t));
+}
+
+function matches(q){
+  q = q.trim().toLowerCase();
+  if (!q) return TEAMS;
+  return TEAMS.filter(t =>
+    NAMES[t].toLowerCase().includes(q) || DATA[t].name.toLowerCase().startsWith(q) || t.toLowerCase().startsWith(q));
+}
+
+function openList(slot, q){
+  const box = document.getElementById("list"+slot);
+  const hits = matches(q);
+  box.innerHTML = hits.length
+    ? hits.map((t,i)=>`<button type="button" class="opt" role="option" data-t="${t}"${i===0?' data-on="1"':''}>
+        <img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b><span class="ab">${t}</span></button>`).join("")
+    : '<div class="nores">No team matches that.</div>';
+  box.hidden = false;
+  document.getElementById("team"+slot).setAttribute("aria-expanded","true");
+}
+function closeList(slot){
+  document.getElementById("list"+slot).hidden = true;
+  document.getElementById("team"+slot).setAttribute("aria-expanded","false");
+}
+
+function choose(slot, t){
+  const other = slot === "A" ? "B" : "A";
+  if (SEL[other] === t) { SEL[other] = SEL[slot]; paint(other); }
+  SEL[slot] = t; paint(slot); closeList(slot); render();
+}
+
+function wirePicker(slot){
+  const input = document.getElementById("team"+slot);
+  const box = document.getElementById("list"+slot);
+  input.addEventListener("focus", ()=>{ input.select(); openList(slot, ""); });
+  input.addEventListener("input", ()=> openList(slot, input.value));
+  input.addEventListener("keydown", e=>{
+    const opts = [...box.querySelectorAll(".opt")];
+    const cur = opts.findIndex(o=>o.dataset.on==="1");
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); if (!opts.length) return;
+      const next = e.key === "ArrowDown" ? Math.min(cur+1, opts.length-1) : Math.max(cur-1, 0);
+      opts.forEach(o=>delete o.dataset.on); opts[next].dataset.on = "1";
+      opts[next].scrollIntoView({block:"nearest"});
+    } else if (e.key === "Enter") {
+      e.preventDefault(); if (opts[cur]) choose(slot, opts[cur].dataset.t);
+    } else if (e.key === "Escape") { closeList(slot); paint(slot); input.blur(); }
+  });
+  box.addEventListener("mousedown", e=>{
+    const o = e.target.closest(".opt"); if (!o) return;
+    e.preventDefault(); choose(slot, o.dataset.t);
+  });
+  input.addEventListener("blur", ()=> setTimeout(()=>{ closeList(slot); paint(slot); }, 120));
+}
+
+(function init(){
+  paint("A"); paint("B");
+  wirePicker("A"); wirePicker("B");
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
+    paint("A"); paint("B"); render(); renderRankings(); });
+  const any = DATA[TEAMS[0]].offense;
+  document.getElementById("m-season").textContent = "2026 regular season";
+  document.getElementById("m-date").textContent = "data " + any.scraped_on;
+  render();
+  bindRankings();
+  wireTips();
+  sampleNote();
+  renderRankings();
+})();
+</script>

@@ -222,8 +222,11 @@ table.model tr.rks td.side span{font-family:"Archivo",system-ui,-apple-system,sa
   letter-spacing:.13em;color:var(--faint);text-transform:uppercase}
 td.rk-good span{color:var(--good);background:var(--good-bg);font-weight:600}
 td.rk-bad  span{color:var(--bad);background:var(--bad-bg);font-weight:600}
-tr.vals.off td:not(.side) span{color:var(--tOff)}
-tr.vals.def td:not(.side) span{color:var(--tDef)}
+/* team colour marks the team name; the figures stay in the default ink so
+   columns read as one set and the colour means "whose row is this" */
+tr.vals td:not(.side) span{color:var(--ink)}
+tr.vals.off td.side span{color:var(--tOff)}
+tr.vals.def td.side span{color:var(--tDef)}
 .blocknote{font-size:12px;color:var(--faint);padding:11px 8px 0;font-style:italic;max-width:64ch}
 .edgestrip{display:flex;flex-wrap:wrap;gap:6px;padding:12px 8px 2px}
 .echip{font-family:"Public Sans",system-ui,-apple-system,sans-serif;font-size:13px;font-weight:500;padding:4px 9px;border-radius:2px;
@@ -236,6 +239,18 @@ tbody td.tm span{display:flex;align-items:center;gap:8px;padding-right:18px}
 tbody td.tm img{width:20px;height:20px;object-fit:contain;flex:none}
 tbody td.tm b{font-family:"Archivo",system-ui,-apple-system,sans-serif;font-weight:600;font-size:16.5px;letter-spacing:-.01em;
   white-space:nowrap}
+</style>
+<style>
+th[data-def]{cursor:help}
+th[data-def]:hover,th[data-def]:focus-visible{color:var(--ink)}
+#tip{position:fixed;z-index:80;max-width:290px;padding:9px 11px;border-radius:3px;
+  background:var(--ink);color:var(--ground);font-family:"Public Sans",system-ui,sans-serif;
+  font-size:13px;line-height:1.42;letter-spacing:0;text-transform:none;text-align:left;
+  font-weight:400;box-shadow:0 8px 22px rgba(0,0,0,.28);pointer-events:none;opacity:0;
+  transition:opacity .11s ease}
+#tip.on{opacity:1}
+#tip b{font-weight:700;display:block;margin-bottom:3px}
+@media (prefers-reduced-motion:reduce){#tip{transition:none}}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -324,20 +339,14 @@ const META={"ARZ":{"city":"Arizona","name":"Cardinals"},"ATL":{"city":"Atlanta",
 const SUPABASE_URL="https://mfliuasrygxkembqmrkr.supabase.co";
 const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mbGl1YXNyeWd4a2VtYnFtcmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTI2MzIsImV4cCI6MjA5MDgyODYzMn0.ecYwYajjAfKNl22ONtYp2i99U-ePEAZ6uHESPiiT8nw";   // anon key: read-only, enforced by row-level security
 
-const COLUMNS=["team","side","games","attempts","rushing_yards","ypc","rushing_tds","first_downs",
- "long_run","dvoa","succ_pct","epa_att","aybco","ayaco","stf_pct","exp_pct","crt_pct","aryoe",
- "ply_gm","rush_pct","yd_ply","pt_gm","drv_gm","sec_ply","scraped_on"].join(",");
-
 async function loadData(){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/nfl_rushing_latest?select=${COLUMNS}`,
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/nfl_rushing_latest?select=team,side,games,attempts,rushing_yards,ypc,rushing_tds,first_downs,long_run,dvoa,succ_pct,epa_att,aybco,ayaco,stf_pct,exp_pct,crt_pct,aryoe,ply_gm,rush_pct,yd_ply,pt_gm,drv_gm,sec_ply,scraped_on`,
     {headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});
   if(!r.ok) throw new Error("Supabase returned "+r.status);
   const rows=await r.json();
   if(!rows.length) throw new Error("no rows returned");
   const out={};
-  for(const x of rows){
-    (out[x.team] ??= {})[x.side]=x;
-  }
+  for(const x of rows){ (out[x.team] ??= {})[x.side]=x; }
   const bad=Object.entries(out).filter(([,v])=>!v.offense||!v.defense).map(([k])=>k);
   if(bad.length) throw new Error("incomplete data for "+bad.join(", "));
   return out;
@@ -348,35 +357,12 @@ async function loadData(){
   try{ DATA=await loadData(); }
   catch(err){
     document.getElementById("boot").innerHTML =
-      `<b>Couldn't load the data.</b><span>${err.message}</span><br><code>`+
-      `The scraper writes on Tue, Wed and Sun at 5pm. If this persists, check ~/logs/nfl_rushing.log</code>`;
+      `<b>Couldn't load the data.</b><span>${err.message}</span><br>`+
+      `<code>The scraper runs Sun, Tue and Wed. If this persists, check the Actions tab.</code>`;
     return;
   }
   document.getElementById("boot").hidden=true;
   document.getElementById("app").hidden=false;
-
-  // Sample-size callout, computed rather than hardcoded so it can't go stale.
-  (function sampleNote(){
-    const gp = Object.values(DATA).map(v=>v.offense.games).filter(Boolean);
-    const lo = Math.min(...gp), hi = Math.max(...gp);
-    if (hi >= 8) return;                       // by then the numbers stand on their own
-    let worst = null;
-    for (const [t,v] of Object.entries(DATA)) {
-      const o = v.offense;
-      if (!o.long_run || !o.rushing_yards) continue;
-      const share = o.long_run / o.rushing_yards;
-      if (!worst || share > worst.share) worst = {t, share, long: o.long_run, yds: o.rushing_yards};
-    }
-    const games = lo === hi ? `${hi} games` : `${lo}-${hi} games`;
-    const tail = worst
-      ? ` ${META[worst.t].city} ${META[worst.t].name} have gained ${Math.round(worst.share*100)}% of their
-         season rushing yards on a single ${worst.long}-yard carry.`
-      : "";
-    document.getElementById("warntext").innerHTML =
-      `<b>${games} of data.</b> At this sample size one long run reorders the board.${tail}
-       Read direction, not magnitude, until about Week 6.`;
-    document.getElementById("warn").hidden = false;
-  })();
 
 const NAMES = Object.fromEntries(Object.entries(DATA).map(([k,v])=>[k, META[k].city+" "+META[k].name]));
 const TEAMS = Object.keys(DATA).sort((x,y)=>NAMES[x].localeCompare(NAMES[y]));
@@ -453,10 +439,80 @@ const fmt = (v,dp)=> v==null ? "—" : v.toLocaleString(undefined,{minimumFracti
 const ord = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*n%10] || "th");
 const rkClass = r => r==null ? "" : r<=10 ? "rk-good" : r>=23 ? "rk-bad" : "";
 
+const DEFS = {
+  rushing_yards:["Total Rushing Yards","Season total. Volume, not quality — it rises with how often a team runs."],
+  attempts:["Total Attempts","Season total rushing attempts."],
+  games:["Games Played","Used as the denominator for every per-game figure."],
+  rushing_tds:["Season Rushing TDs","Goal-line opportunity drives this as much as run quality, and the sample is tiny."],
+  yds_gm:["Rush Yards per Game","Attempts multiplied by efficiency, so game script is baked in."],
+  att_gm:["Attempts per Game","Tendency and game script. Says how much a team runs, not how well."],
+  ypc:["Yards per Carry","Rushing yards divided by attempts. Computed from the totals here rather than taken from FTN's displayed column, which is rounded to one decimal."],
+  aybco:["Average Yards Before Contact","Yards gained per attempt before the runner is first contacted. The closest thing here to an offensive line versus front seven measure, and the most transferable across matchups."],
+  ayaco:["Average Yards After Contact","Yards gained per attempt after first contact. Mostly the ball carrier rather than the blocking, so it moves when a back is out."],
+  exp_pct:["Explosive Run Rate","Share of rushing attempts that gain 10 or more yards."],
+  succ_pct:["Rushing Success Rate","Share of attempts that count as a success for the down and distance. The most stable stat on this page at small sample."],
+  stf_pct:["Stuffed Run Rate","Share of attempts stopped at or before the line of scrimmage. For an offense lower is better; for a defense, higher — being stuffed is bad, forcing stuffs is good."],
+  dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for opponent. The only schedule-adjusted number here, so it is the one least distorted by an easy or brutal slate."],
+  epa_att:["Expected Points Added per Attempt","Values each carry by the game situation it happened in, so a 3-yard gain on 3rd-and-2 outranks a 5-yard gain on 3rd-and-8."],
+  ply_gm:["Plays per Game","Offensive plays run per game. For defenses this is plays faced, derived from yards and yards-per-play — FTN publishes no defensive tempo table."],
+  rush_pct:["Rush Rate","Share of offensive plays that are runs. Pure tendency."],
+  crt_pct:["Creation Rate","Share of rushing yards gained after first contact. Fully determined by the two contact splits, so it adds no information of its own."],
+  aryoe:["Average Rush Yards Over Expected","FTN has not populated this for the current season yet."],
+};
+
+// Computed rather than hardcoded so a live page can't drift out of date.
+function sampleNote(){
+  const gp = Object.values(DATA).map(v=>v.offense.games).filter(Boolean);
+  if (!gp.length) return;
+  const lo = Math.min(...gp), hi = Math.max(...gp);
+  if (hi >= 8) return;                    // by then the numbers stand on their own
+  let worst = null;
+  for (const [t,v] of Object.entries(DATA)) {
+    const o = v.offense;
+    if (!o.long_run || !o.rushing_yards) continue;
+    const share = o.long_run / o.rushing_yards;
+    if (!worst || share > worst.share) worst = {t, share, long:o.long_run};
+  }
+  const games = lo === hi ? `${hi} games` : `${lo}-${hi} games`;
+  const tail = worst ? ` ${NAMES[worst.t]} have gained ${Math.round(worst.share*100)}% of their
+    season rushing yards on a single ${worst.long}-yard carry.` : "";
+  const box = document.getElementById("warn");
+  if (!box) return;
+  document.getElementById("warntext").innerHTML =
+    `<b>${games} of data.</b> At this sample size one long run reorders the board.${tail}
+     Read direction, not magnitude, until about Week 6.`;
+  box.hidden = false;
+}
+
+function wireTips(){
+  let tip = document.getElementById("tip");
+  if (!tip) { tip = document.createElement("div"); tip.id = "tip"; document.body.appendChild(tip); }
+  const show = el => {
+    const d = DEFS[el.dataset.def]; if (!d) return;
+    tip.innerHTML = `<b>${d[0]}</b>${d[1]}`;
+    tip.classList.add("on");
+    const r = el.getBoundingClientRect();
+    tip.style.left = "0px"; tip.style.top = "0px";
+    const t = tip.getBoundingClientRect();
+    let x = r.left + r.width/2 - t.width/2;
+    x = Math.max(10, Math.min(x, innerWidth - t.width - 10));
+    let y = r.bottom + 8;
+    if (y + t.height > innerHeight - 10) y = r.top - t.height - 8;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  };
+  const hide = () => tip.classList.remove("on");
+  for (const ev of ["mouseover","focusin"])
+    document.addEventListener(ev, e => {
+      const el = e.target.closest?.("th[data-def]");
+      el ? show(el) : hide();
+    });
+  for (const ev of ["mouseout","focusout","scroll"]) document.addEventListener(ev, hide, true);
+}
+
 function block(team, side, label) {
   const row = DATA[team][side];
   const head = `<tr><th class="side">${label}</th>` +
-    COLS.map(c=>`<th>${c.label}</th>`).join("") + "</tr>";
+    COLS.map(c=>`<th data-def="${c.k}" tabindex="0">${c.label}</th>`).join("") + "</tr>";
   const vals = `<tr class="vals ${side==="offense"?"off":"def"}">
       <td class="side"><span><img src="${LOGOS[team]}" alt="">${team}</span></td>` +
     COLS.map(c=>`<td><span>${fmt(row[c.k], c.dp)}</span></td>`).join("") + "</tr>";
@@ -562,7 +618,7 @@ function renderRankings() {
     RANK_COLS.map(c=>{
       const on = c.k===rkKey;
       const sort = on ? ` aria-sort="${desc?"descending":"ascending"}"` : "";
-      return `<th tabindex="0" data-k="${c.k}"${sort}>${c.label}<span class="ar">${on?(desc?"▼":"▲"):""}</span></th>`;
+      return `<th tabindex="0" data-k="${c.k}" data-def="${c.k}"${sort}>${c.label}<span class="ar">${on?(desc?"▼":"▲"):""}</span></th>`;
     }).join("");
 
   document.getElementById("rankbody").innerHTML = rows.map((t,i)=>{
@@ -685,6 +741,8 @@ function wirePicker(slot){
   document.getElementById("m-date").textContent = "data " + any.scraped_on;
   render();
   bindRankings();
+  wireTips();
+  sampleNote();
   renderRankings();
 })();
 

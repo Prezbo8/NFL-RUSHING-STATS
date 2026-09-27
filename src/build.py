@@ -25,7 +25,7 @@ live_script = script.replace(
 ).replace('DATA[t].name.toLowerCase()','META[t].name.toLowerCase()')
 
 COLS = ("team,side,games,attempts,rushing_yards,ypc,rushing_tds,first_downs,long_run,dvoa,succ_pct,"
-        "epa_att,aybco,ayaco,stf_pct,exp_pct,crt_pct,aryoe,ply_gm,rush_pct,yd_ply,pt_gm,drv_gm,sec_ply,scraped_on")
+        "epa_att,aybco,ayaco,stf_pct,exp_pct,crt_pct,aryoe,ply_gm,rush_pct,yd_ply,pt_gm,drv_gm,sec_ply,scraped_on,scraped_at")
 
 live = f"""<!doctype html>
 <html lang="en">

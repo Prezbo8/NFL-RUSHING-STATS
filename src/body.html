@@ -10,6 +10,7 @@
   <div class="live" id="live">
     <span class="row"><i class="dot"></i><span id="livetext">Live · Supabase</span></span>
     <span class="src" id="livedate"></span>
+    <span class="src" id="liverun"></span>
   </div>
 </header>
 
@@ -451,6 +452,13 @@ function wirePicker(slot){
     document.getElementById("livedate").textContent =
       "data " + d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
       (days <= 0 ? " · today" : days === 1 ? " · yesterday" : ` · ${days} days ago`);
+    const at = DATA[TEAMS[0]].offense.scraped_at;
+    if (at) {
+      const r = new Date(at);
+      document.getElementById("liverun").textContent = "last scraped " +
+        r.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + ", " +
+        r.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+    }
     if (days > 4) {
       document.getElementById("live").classList.add("stale");
       document.getElementById("livetext").textContent = "Stale · Supabase";

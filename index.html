@@ -350,6 +350,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
 @media (prefers-reduced-motion:reduce){.live .dot{animation:none}}
 @media (max-width:560px){header{flex-direction:column}.live{align-items:flex-start;padding-top:0}}
 </style>
+<style>.live .src+.src{margin-top:-1px;opacity:.82}</style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
@@ -371,6 +372,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
   <div class="live" id="live">
     <span class="row"><i class="dot"></i><span id="livetext">Live · Supabase</span></span>
     <span class="src" id="livedate"></span>
+    <span class="src" id="liverun"></span>
   </div>
 </header>
 
@@ -444,7 +446,7 @@ const SUPABASE_URL="https://mfliuasrygxkembqmrkr.supabase.co";
 const SUPABASE_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mbGl1YXNyeWd4a2VtYnFtcmtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTI2MzIsImV4cCI6MjA5MDgyODYzMn0.ecYwYajjAfKNl22ONtYp2i99U-ePEAZ6uHESPiiT8nw";   // anon key: read-only, enforced by row-level security
 
 async function loadData(){
-  const r=await fetch(`${SUPABASE_URL}/rest/v1/nfl_rushing_latest?select=team,side,games,attempts,rushing_yards,ypc,rushing_tds,first_downs,long_run,dvoa,succ_pct,epa_att,aybco,ayaco,stf_pct,exp_pct,crt_pct,aryoe,ply_gm,rush_pct,yd_ply,pt_gm,drv_gm,sec_ply,scraped_on`,
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/nfl_rushing_latest?select=team,side,games,attempts,rushing_yards,ypc,rushing_tds,first_downs,long_run,dvoa,succ_pct,epa_att,aybco,ayaco,stf_pct,exp_pct,crt_pct,aryoe,ply_gm,rush_pct,yd_ply,pt_gm,drv_gm,sec_ply,scraped_on,scraped_at`,
     {headers:{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}});
   if(!r.ok) throw new Error("Supabase returned "+r.status);
   const rows=await r.json();
@@ -845,6 +847,13 @@ function wirePicker(slot){
     document.getElementById("livedate").textContent =
       "data " + d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
       (days <= 0 ? " · today" : days === 1 ? " · yesterday" : ` · ${days} days ago`);
+    const at = DATA[TEAMS[0]].offense.scraped_at;
+    if (at) {
+      const r = new Date(at);
+      document.getElementById("liverun").textContent = "last scraped " +
+        r.toLocaleDateString(undefined,{month:"short",day:"numeric"}) + ", " +
+        r.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+    }
     if (days > 4) {
       document.getElementById("live").classList.add("stale");
       document.getElementById("livetext").textContent = "Stale · Supabase";

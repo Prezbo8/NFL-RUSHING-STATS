@@ -379,8 +379,8 @@ tbody td.tm span,tbody td.num span{background:none}
 .tickers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 26px}
 .tick{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--surface);
   border-radius:2px;overflow:hidden;min-width:0}
-.ticklabel{display:block;padding:9px 12px;font-family:"Archivo",system-ui,sans-serif;font-weight:700;
-  font-size:13px;letter-spacing:.06em;text-transform:uppercase;line-height:1.25;
+.ticklabel{display:block;padding:9px 12px;text-align:center;font-family:"Archivo",system-ui,sans-serif;
+  font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;line-height:1.25;
   border-bottom:1px solid var(--line);background:var(--sunk)}
 .ticklabel s{display:block;text-decoration:none;font-size:11px;letter-spacing:.11em;color:var(--faint)}
 .tick.hot .ticklabel{color:#C2561F}
@@ -395,8 +395,8 @@ tbody td.tm span,tbody td.num span{background:none}
 .tickwrap{position:relative;overflow:hidden}
 .hstrip{display:flex;height:100%;will-change:transform}
 .tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;padding-bottom:5px}
-.tickstat{flex:none;padding:5px 12px 3px;font-family:"Archivo",system-ui,sans-serif;font-weight:700;
-  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.tickstat{flex:none;padding:7px 12px 5px;text-align:center;font-family:"Archivo",system-ui,sans-serif;
+  font-weight:700;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .vport{flex:1}
 
 .tickitem{display:grid;grid-template-columns:19px auto 1fr;gap:8px;align-items:center;

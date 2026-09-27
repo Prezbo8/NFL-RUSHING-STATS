@@ -389,23 +389,24 @@ tbody td.tm span,tbody td.num span{background:none}
   :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#5FB4E6}}
 :root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
 :root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
-/* vertical marquee: the track holds its rows twice and slides up by half */
-.tickwrap{position:relative;height:168px;overflow:hidden;
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);
-  mask-image:linear-gradient(180deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
-.ticktrack{display:flex;flex-direction:column;will-change:transform;animation:marquee linear infinite}
-.tick:hover .ticktrack,.tick:focus-within .ticktrack{animation-play-state:paused}
-@keyframes marquee{from{transform:translateY(0)}to{transform:translateY(-50%)}}
-@media (prefers-reduced-motion:reduce){.ticktrack{animation:none}
-  .tickwrap{overflow-y:auto;-webkit-mask-image:none;mask-image:none}}
-.tickitem{display:grid;grid-template-columns:auto 17px 1fr auto;gap:7px;align-items:center;
-  padding:5px 12px;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tickitem .tickstat{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:9.5px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--faint);width:44px}
-.tickitem img{width:17px;height:17px;object-fit:contain}
-.tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13px}
-.tickitem span.v{color:var(--ink);font-weight:600;margin-left:auto}
-.tickitem i{font-style:normal;color:var(--faint);font-size:10.5px}
+
+/* Two axes: rows crawl upward inside one stat, then the whole strip slides
+   sideways to the next stat. */
+.tickwrap{position:relative;height:124px;overflow:hidden}
+.hstrip{display:flex;height:100%;will-change:transform}
+.tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.tickstat{flex:none;padding:5px 12px 3px;font-family:"Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.vport{flex:1;overflow:hidden}
+.vtrack{will-change:transform}
+.tickitem{display:grid;grid-template-columns:19px auto 1fr;gap:8px;align-items:center;
+  padding:5px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tickitem img{width:19px;height:19px;object-fit:contain}
+.tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px}
+.tickitem span.v{color:var(--ink);font-weight:600;text-align:right}
+.tickitem i{font-style:normal;color:var(--faint);font-size:10.5px;margin-left:5px}
 @media (max-width:900px){.tickers{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.tickers{grid-template-columns:1fr}.tickwrap{height:132px}}
+@media (max-width:520px){.tickers{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.hstrip,.vtrack{transition:none!important;transform:none!important}
+  .tickwrap{height:auto;overflow:visible}.hstrip{flex-direction:column}.tickpanel{flex:none}}
 </style>

@@ -187,20 +187,55 @@ const TICK_STATS = [
   {k:"exp_pct",  label:"Exp %",  dp:1},
 ];
 
-function tickerRows(side, best) {
-  return TICK_STATS.flatMap(st=>{
+function tickerPanels(side, best) {
+  return TICK_STATS.map(st=>{
     const col = COLS.find(c=>c.k===st.k) || RANK_COLS.find(c=>c.k===st.k);
     const high = side==="offense" ? col.offHigh : col.defHigh;
     const rows = TEAMS.map(t=>({t, v:DATA[t][side][st.k]})).filter(o=>o.v!=null)
       .sort((a,b)=> high ? b.v-a.v : a.v-b.v);
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
-    return pick.map((o,i)=>{
+    const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem"><span class="tickstat">${st.label}</span>
-        <img src="${LOGOS[o.t]}" alt=""><b style="color:${tc(o.t)}">${o.t}</b>
+      return `<span class="tickitem"><img src="${LOGOS[o.t]}" alt="">
+        <b style="color:${tc(o.t)}">${o.t}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
-    });
+    }).join("");
+    return `<div class="tickpanel"><span class="tickstat">${st.label}</span>
+      <div class="vport"><div class="vtrack">${items}</div></div></div>`;
   }).join("");
+}
+
+// Crawl the rows up inside one stat, pause, slide across to the next.
+const V_MS = 7000, HOLD_MS = 1600, H_MS = 900;
+
+function runTicker(tick, delay) {
+  const strip = tick.querySelector(".hstrip");
+  const panels = [...strip.children];
+  let i = 0, stopped = false;
+  tick.addEventListener("mouseenter", ()=>{ stopped = true; });
+  tick.addEventListener("mouseleave", ()=>{ stopped = false; });
+
+  const step = () => {
+    if (stopped) return setTimeout(step, 400);
+    const vt = panels[i].querySelector(".vtrack");
+    const port = panels[i].querySelector(".vport");
+    const over = Math.max(0, vt.scrollHeight - port.clientHeight);
+    vt.style.transition = `transform ${V_MS}ms linear`;
+    vt.style.transform = `translateY(-${over}px)`;
+    setTimeout(()=>{
+      const last = i;
+      i = (i + 1) % panels.length;
+      // wrapping back to the first stat snaps rather than rewinding through all six
+      strip.style.transition = i === 0 ? "none" : `transform ${H_MS}ms cubic-bezier(.65,0,.35,1)`;
+      strip.style.transform = `translateX(-${i * 100}%)`;
+      setTimeout(()=>{
+        const pv = panels[last].querySelector(".vtrack");
+        pv.style.transition = "none"; pv.style.transform = "translateY(0)";
+        step();
+      }, H_MS + 120);
+    }, V_MS + HOLD_MS);
+  };
+  setTimeout(step, delay);
 }
 
 function buildTickers() {
@@ -210,19 +245,13 @@ function buildTickers() {
     {side:"defense", best:true,  cls:"hot",  a:"Rushing Defense", b:"Top 5 \u{1F525}"},
     {side:"defense", best:false, cls:"cold", a:"Rushing Defense", b:"Bottom 5 \u{2744}\u{FE0F}"},
   ];
-  document.getElementById("tickers").innerHTML = defs.map(d=>{
-    const inner = tickerRows(d.side, d.best);
-    return `<div class="tick ${d.cls}">
+  document.getElementById("tickers").innerHTML = defs.map(d=>
+    `<div class="tick ${d.cls}">
       <span class="ticklabel">${d.a}<s>${d.b}</s></span>
-      <div class="tickwrap"><div class="ticktrack">${inner}${inner}</div></div></div>`;
-  }).join("");
-
-  requestAnimationFrame(()=>{
-    for (const tr of document.querySelectorAll(".ticktrack")) {
-      const px = tr.scrollHeight / 2;
-      tr.style.animationDuration = Math.max(24, Math.round(px / 14)) + "s";
-    }
-  });
+      <div class="tickwrap"><div class="hstrip">${tickerPanels(d.side, d.best)}</div></div>
+    </div>`).join("");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.querySelectorAll(".tick").forEach((t,n)=> runTicker(t, 600 + n * 500));
 }
 
 function wireTips(){

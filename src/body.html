@@ -111,20 +111,20 @@ const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
 const COLS = [
-  {k:"rushing_yards", label:"Tot<br>Yds",   dp:0, norank:true},
-  {k:"attempts",      label:"Tot<br>Att",     dp:0, norank:true},
-  {k:"games",         label:"G",   dp:0, norank:true},
   {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
-  {k:"yds_gm",        label:"Yds<br>/Gm", dp:1, offHigh:true,  defHigh:false},
-  {k:"att_gm",        label:"Att<br>/Gm",      dp:1, offHigh:true,  defHigh:false},
-  {k:"ypc",           label:"YPC", dp:2, offHigh:true,  defHigh:false},
-  {k:"aybco",         label:"aYBCO", dp:2, offHigh:true, defHigh:false},
-  {k:"ayaco",         label:"aYACO",  dp:2, offHigh:true, defHigh:false},
-  {k:"exp_pct",       label:"Exp<br>%",   dp:1, offHigh:true, defHigh:false},
-  {k:"succ_pct",      label:"Succ<br>%",  dp:1, offHigh:true,  defHigh:false},
-  {k:"stf_pct",       label:"Stf<br>%",  dp:1, offHigh:false, defHigh:true},
+  {k:"yds_gm",        label:"Yds<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
+  {k:"att_gm",        label:"Att<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
+  {k:"ypc",           label:"YPC",              dp:2, offHigh:true,  defHigh:false},
+  {k:"aybco",         label:"aYBCO",            dp:2, offHigh:true,  defHigh:false},
+  {k:"ayaco",         label:"aYACO",            dp:2, offHigh:true,  defHigh:false},
+  {k:"exp_pct",       label:"Exp<br>%",         dp:1, offHigh:true,  defHigh:false},
+  {k:"succ_pct",      label:"Succ<br>%",        dp:1, offHigh:true,  defHigh:false},
+  {k:"stf_pct",       label:"Stf<br>%",         dp:1, offHigh:false, defHigh:true},
   {k:"dvoa",          label:"DVOA",             dp:1, offHigh:true,  defHigh:false},
-  {k:"epa_att",       label:"EPA<br>/Att",     dp:3, offHigh:true,  defHigh:false},
+  {k:"epa_att",       label:"EPA<br>/Att",      dp:3, offHigh:true,  defHigh:false},
+  // season totals sit at the end: context, not a read
+  {k:"rushing_yards", label:"Tot<br>Yds",       dp:0, norank:true},
+  {k:"attempts",      label:"Tot<br>Att",       dp:0, norank:true},
 ];
 
 const RANK = {};

@@ -259,29 +259,32 @@ th[data-def]:hover,th[data-def]:focus-visible{color:var(--ink)}
 :root{
   --t1-bg:rgba(0,214,102,.46); --t1-fg:#04371a;
   --t2-bg:rgba(0,190,96,.26);  --t2-fg:#0a4522;
-  --t3-bg:rgba(0,180,96,.11);  --t3-fg:#14512c;
-  --t4-bg:rgba(235,185,20,.30); --t4-fg:#63490a;
+  --t3-bg:rgba(0,180,96,.20);  --t3-fg:#14512c;
+  --t4-bg:rgba(235,185,20,.34); --t4-fg:#63490a;
   --t5-bg:rgba(214,48,38,.30); --t5-fg:#5c1410;
+  --tier-fg:#12181B;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
   --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
-  --t3-bg:rgba(52,196,120,.10); --t3-fg:#82c7a1;
-  --t4-bg:rgba(250,205,60,.22);  --t4-fg:#f2d075;
+  --t3-bg:rgba(52,196,120,.20); --t3-fg:#82c7a1;
+  --t4-bg:rgba(250,205,60,.28);  --t4-fg:#f2d075;
   --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
+  --tier-fg:#FFFFFF;
 }}
 :root[data-theme="dark"]{
   --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
   --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
-  --t3-bg:rgba(52,196,120,.10); --t3-fg:#82c7a1;
-  --t4-bg:rgba(250,205,60,.22);  --t4-fg:#f2d075;
+  --t3-bg:rgba(52,196,120,.20); --t3-fg:#82c7a1;
+  --t4-bg:rgba(250,205,60,.28);  --t4-fg:#f2d075;
   --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
+  --tier-fg:#FFFFFF;
 }
-td.t1 span{background:var(--t1-bg);color:var(--t1-fg)}
-td.t2 span{background:var(--t2-bg);color:var(--t2-fg)}
-td.t3 span{background:var(--t3-bg);color:var(--t3-fg)}
-td.t4 span{background:var(--t4-bg);color:var(--t4-fg)}
-td.t5 span{background:var(--t5-bg);color:var(--t5-fg)}
+td.t1 span{background:var(--t1-bg);color:var(--tier-fg)}
+td.t2 span{background:var(--t2-bg);color:var(--tier-fg)}
+td.t3 span{background:var(--t3-bg);color:var(--tier-fg)}
+td.t4 span{background:var(--t4-bg);color:var(--tier-fg)}
+td.t5 span{background:var(--t5-bg);color:var(--tier-fg)}
 td.t1 span,td.t2 span,td.t3 span,td.t4 span,td.t5 span{font-weight:700}
 /* team name and position columns stay neutral */
 tbody td.tm span,tbody td.num span{background:none}
@@ -298,6 +301,13 @@ tbody td.tm span,tbody td.num span{background:none}
 /* rankings table is bold throughout; declared last so the sorted-column
    rule can't quietly win on specificity */
 #ranktable tbody td span,#ranktable tbody td.lead span,#ranktable tbody td.tm b{font-weight:700}
+</style>
+<style>
+/* RANK rows on the matchup tab: the row-level rule sets a faint grey, which
+   outranks the tier rule on specificity. Highlighted rank cells take the same
+   white bold treatment as the rankings table. */
+table.model tr.rks td.t1 span,table.model tr.rks td.t2 span,table.model tr.rks td.t3 span,
+table.model tr.rks td.t4 span,table.model tr.rks td.t5 span{color:var(--tier-fg);font-weight:700}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -453,20 +463,20 @@ const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
 const COLS = [
-  {k:"rushing_yards", label:"Tot<br>Yds",   dp:0, norank:true},
-  {k:"attempts",      label:"Tot<br>Att",     dp:0, norank:true},
-  {k:"games",         label:"G",   dp:0, norank:true},
   {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
-  {k:"yds_gm",        label:"Yds<br>/Gm", dp:1, offHigh:true,  defHigh:false},
-  {k:"att_gm",        label:"Att<br>/Gm",      dp:1, offHigh:true,  defHigh:false},
-  {k:"ypc",           label:"YPC", dp:2, offHigh:true,  defHigh:false},
-  {k:"aybco",         label:"aYBCO", dp:2, offHigh:true, defHigh:false},
-  {k:"ayaco",         label:"aYACO",  dp:2, offHigh:true, defHigh:false},
-  {k:"exp_pct",       label:"Exp<br>%",   dp:1, offHigh:true, defHigh:false},
-  {k:"succ_pct",      label:"Succ<br>%",  dp:1, offHigh:true,  defHigh:false},
-  {k:"stf_pct",       label:"Stf<br>%",  dp:1, offHigh:false, defHigh:true},
+  {k:"yds_gm",        label:"Yds<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
+  {k:"att_gm",        label:"Att<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
+  {k:"ypc",           label:"YPC",              dp:2, offHigh:true,  defHigh:false},
+  {k:"aybco",         label:"aYBCO",            dp:2, offHigh:true,  defHigh:false},
+  {k:"ayaco",         label:"aYACO",            dp:2, offHigh:true,  defHigh:false},
+  {k:"exp_pct",       label:"Exp<br>%",         dp:1, offHigh:true,  defHigh:false},
+  {k:"succ_pct",      label:"Succ<br>%",        dp:1, offHigh:true,  defHigh:false},
+  {k:"stf_pct",       label:"Stf<br>%",         dp:1, offHigh:false, defHigh:true},
   {k:"dvoa",          label:"DVOA",             dp:1, offHigh:true,  defHigh:false},
-  {k:"epa_att",       label:"EPA<br>/Att",     dp:3, offHigh:true,  defHigh:false},
+  {k:"epa_att",       label:"EPA<br>/Att",      dp:3, offHigh:true,  defHigh:false},
+  // season totals sit at the end: context, not a read
+  {k:"rushing_yards", label:"Tot<br>Yds",       dp:0, norank:true},
+  {k:"attempts",      label:"Tot<br>Att",       dp:0, norank:true},
 ];
 
 const RANK = {};

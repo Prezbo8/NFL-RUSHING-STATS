@@ -222,8 +222,8 @@ table.model tr.rks td.side span{font-family:"Archivo",system-ui,-apple-system,sa
   letter-spacing:.13em;color:var(--faint);text-transform:uppercase}
 td.rk-good span{color:var(--good);background:var(--good-bg);font-weight:600}
 td.rk-bad  span{color:var(--bad);background:var(--bad-bg);font-weight:600}
-/* team colour marks the team name; the figures stay in the default ink so
-   columns read as one set and the colour means "whose row is this" */
+/* team color marks the team name; the figures stay in the default ink so
+   columns read as one set and the color means "whose row is this" */
 tr.vals td:not(.side) span{color:var(--ink)}
 tr.vals.off td.side span{color:var(--tOff)}
 tr.vals.def td.side span{color:var(--tDef)}
@@ -323,7 +323,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
 </style>
 <style>.live .src+.src{margin-top:-1px;opacity:.82}</style>
 <style>
-/* Highlighted cells: number centred, colour filling the whole cell rather
+/* Highlighted cells: number centerd, color filling the whole cell rather
    than sitting in a padded block with uneven top/bottom gaps. */
 table.model tr.rks td{height:1px}                 /* lets the span stretch to the row */
 table.model tr.rks td span{display:flex;align-items:center;justify-content:center;
@@ -336,7 +336,7 @@ table.model tr.vals td:not(.side) span{text-align:center}
 table.model th:not(.side){text-align:center}
 </style>
 <style>
-/* Rank tiers step through five distinct hues rather than shading one colour.
+/* Rank tiers step through five distinct hues rather than shading one color.
    Green -> lime -> gold -> orange -> red, so each tier is its own step and the
    ramp reads left to right the way a heat scale should. */
 :root{
@@ -366,22 +366,22 @@ tbody td.tm span,tbody td.num span{background:none}
 </style>
 <style>
 .edges{min-width:0;flex:1}
-.edgehead{padding:0 8px 9px;font-family:"Archivo",system-ui,sans-serif;font-weight:600;
-  font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
-.edgerow{display:grid;grid-template-columns:96px 1fr 26px 1fr 60px;gap:10px;align-items:center;
-  padding:5px 8px;font-size:13.5px}
+.edgehead{padding:0 8px 10px;font-family:"Archivo",system-ui,sans-serif;font-weight:600;
+  font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.edgerow{display:grid;grid-template-columns:104px 152px 30px 152px 96px;gap:10px;align-items:center;
+  justify-content:start;padding:6px 8px;font-size:15px}
 .edgerow .es{color:var(--muted)}
 .edgerow .side{display:flex;align-items:baseline;gap:6px;white-space:nowrap;opacity:.5}
 .edgerow .side.win{opacity:1}
 .edgerow .side.o{justify-content:flex-end;text-align:right}
-.edgerow .tm{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px}
-.edgerow .sd{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.edgerow .tm{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:15px}
+.edgerow .sd{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .edgerow .rk{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
-.edgerow .side.win .rk{font-size:15px}
-.edgerow .vs{text-align:center;font-size:11px;color:var(--faint);letter-spacing:.06em}
+.edgerow .side.win .rk{font-size:17px}
+.edgerow .vs{text-align:center;font-size:12px;color:var(--faint);letter-spacing:.06em}
 .edgerow .gap{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .edgerow.even .gap{color:var(--faint);font-weight:500}
-@media (max-width:620px){.edgerow{grid-template-columns:74px 1fr 20px 1fr;gap:7px;font-size:12.5px}
+@media (max-width:620px){.edgerow{grid-template-columns:74px 1fr 22px 1fr;gap:7px;font-size:13px}
   .edgerow .gap{display:none}.edgerow .sd{display:none}}
 </style>
 <style>
@@ -642,14 +642,14 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// One row per core stat, as a straight rank comparison: the offence's league
-// rank against the rank of the defence facing it. Both are 1 = best within
+// One row per core stat, as a straight rank comparison: the offense's league
+// rank against the rank of the defense facing it. Both are 1 = best within
 // their own side, so the smaller number wins and the difference is the edge.
 function edges(offT, defT) {
   const rows = ["dvoa","succ_pct","aybco","ayaco","stf_pct","exp_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
-    const diff = d.rank - o.rank;                 // positive: the offence is better ranked
+    const diff = d.rank - o.rank;                 // positive: the offense is better ranked
     const even = Math.abs(diff) < 3;
     const offWin = diff > 0;
     const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
@@ -666,7 +666,7 @@ function edges(offT, defT) {
       ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}
       <span class="gap">${gap}</span></div>`;
   }).join("");
-  return `<div class="edgehead">Edges — league rank, offence vs the defence facing it</div>${rows}`;
+  return `<div class="edgehead">Edges — league rank, offense vs the defense facing it</div>${rows}`;
 }
 
 function panel(offT, defT) {

@@ -87,13 +87,16 @@ security add-generic-password -s nfl-rushing-supabase-key -a "$USER" -w 'eyJ...'
 
 ## Schedule
 
-`~/Library/LaunchAgents/com.daniell.nfl.rushing.plist` — Tue, Wed, Sun at 17:00.
-Logs to `~/logs/nfl_rushing.log`.
+Runs on **GitHub Actions** — `.github/workflows/scrape.yml`, Sun/Tue/Wed at 22:00 UTC.
 
-```bash
-launchctl list | grep nfl.rushing
-launchctl start com.daniell.nfl.rushing
-```
+That lands at 18:00 EDT / 17:00 EST. GitHub cron has no DST handling, so 22:00 was chosen
+so the run never fires *before* 5pm New York in either half of the year.
+
+Credentials come from repo secrets `SUPABASE_URL` and `SUPABASE_KEY` (service-role). Secrets
+are not exposed to pull requests from forks, and the workflow only triggers on `schedule` and
+`workflow_dispatch`.
+
+Run it now: Actions tab -> "Scrape FTN rushing stats" -> Run workflow, or `gh workflow run scrape.yml`.
 
 ## Usage
 

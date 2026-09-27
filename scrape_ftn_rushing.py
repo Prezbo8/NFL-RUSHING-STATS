@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 
 import requests
 
@@ -20,6 +21,10 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 SEASON = int(os.environ.get("FTN_SEASON", 2026))
 TABLE = "nfl_rushing_team_stats"
+# Snapshots are keyed by date, so stamp them in the league's timezone rather
+# than the runner's. A GitHub runner is UTC, which would label an evening run
+# with the next day's date and split one scrape across two keys.
+TZ = ZoneInfo("America/New_York")
 
 # The page sends a literal "Bearer undefined" for unauthenticated (free) access.
 AUTH = os.environ.get("FTN_AUTH", "Bearer undefined")
@@ -160,7 +165,7 @@ def push(url, key, rows):
 
 
 def main():
-    scraped = date.today()
+    scraped = datetime.now(TZ).date()
     iq = ftn_tables.fetch_all(SEASON)
     print(f"stats-iq tables: " + ", ".join(f"{k}={len(v)}" for k, v in iq.items()))
     off = shape(fetch("team"), "offense", scraped, iq)

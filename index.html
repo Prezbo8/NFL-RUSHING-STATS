@@ -228,11 +228,7 @@ tr.vals td:not(.side) span{color:var(--ink)}
 tr.vals.off td.side span{color:var(--tOff)}
 tr.vals.def td.side span{color:var(--tDef)}
 .blocknote{font-size:12px;color:var(--faint);padding:11px 8px 0;font-style:italic;max-width:64ch}
-.edgestrip{display:flex;flex-wrap:wrap;gap:6px;padding:12px 8px 2px}
-.echip{font-family:"Public Sans",system-ui,-apple-system,sans-serif;font-size:13px;font-weight:500;padding:4px 9px;border-radius:2px;
   border:1px solid var(--line);color:var(--muted)}
-.echip b{font-weight:600}
-.echip.on{border-color:currentColor}
 </style>
 <style>
 tbody td.tm span{display:flex;align-items:center;gap:8px;padding-right:18px}
@@ -320,8 +316,7 @@ table.model tr.rks td.t4 span,table.model tr.rks td.t5 span{color:var(--tier-fg)
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ghost{opacity:.16}}
 :root[data-theme="dark"] .ghost{opacity:.16}
 .panelfoot{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:4px}
-.panelfoot .edgestrip{padding-top:12px}
-@media (max-width:720px){.ghost{width:118px;right:-28px}.phead{padding-right:86px}}
+.panelfoot @media (max-width:720px){.ghost{width:118px;right:-28px}.phead{padding-right:86px}}
 </style>
 <style>
 .brand{display:flex;align-items:center;gap:15px}
@@ -351,6 +346,22 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
 @media (max-width:560px){header{flex-direction:column}.live{align-items:flex-start;padding-top:0}}
 </style>
 <style>.live .src+.src{margin-top:-1px;opacity:.82}</style>
+<style>
+.edges{min-width:0;flex:1}
+.edgehead{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint);padding:0 8px 8px;display:flex;flex-wrap:wrap;gap:4px 9px;align-items:baseline}
+.edgehead span{font-family:"Public Sans",system-ui,sans-serif;font-weight:400;font-size:12px;
+  letter-spacing:0;text-transform:none;color:var(--faint)}
+.edgerow{display:grid;grid-template-columns:96px 42px 1fr 52px;gap:10px;align-items:center;
+  padding:4px 8px;font-size:13.5px}
+.edgerow .es{color:var(--muted)}
+.edgerow .et{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px;letter-spacing:.01em}
+.edgerow .eb{height:7px;background:var(--sunk);border-radius:1px;overflow:hidden;min-width:40px}
+.edgerow .eb i{display:block;height:100%;border-radius:1px}
+.edgerow .en{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.edgerow.even .et,.edgerow.even .en{color:var(--faint);font-weight:500}
+@media (max-width:560px){.edgerow{grid-template-columns:86px 38px 1fr 46px;gap:8px;font-size:13px}}
+</style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
@@ -609,19 +620,28 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// Percentile gap on the three core stats, offense minus the defense stopping it.
+// One row per core stat: who holds the edge, and by how much. The magnitude is
+// a percentile gap, so a rushing offense and a defense's "allowed" version of the
+// same stat can be compared at all. Always stated from the winner's side, so the
+// number is never negative.
 function edges(offT, defT) {
-  return ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
+  const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
-    if (!o || !d) return null;
+    if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);
-    const col = COLS.find(c=>c.k===k);
-    const lab = col.label.replace(/<br>\//g,"/").replace(/<br>/g," ");
-    if (Math.abs(gap) < 8) return `<span class="echip">${lab} <b>even</b></span>`;
-    const win = gap > 0 ? offT : defT;
-    const colr = gap > 0 ? "var(--tOff)" : "var(--tDef)";
-    return `<span class="echip on" style="color:${colr}">${lab} <b>${win} ${gap>0?"+":""}${gap}</b></span>`;
-  }).filter(Boolean).join("");
+    const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
+    if (Math.abs(gap) < 8)
+      return `<div class="edgerow even"><span class="es">${lab}</span><span class="et">even</span>
+        <span class="eb"></span><span class="en">—</span></div>`;
+    const win  = gap > 0 ? offT : defT;
+    const col  = gap > 0 ? "var(--tOff)" : "var(--tDef)";
+    const mag  = Math.abs(gap);
+    return `<div class="edgerow"><span class="es">${lab}</span>
+      <span class="et" style="color:${col}">${win}</span>
+      <span class="eb"><i style="width:${mag}%;background:${col}"></i></span>
+      <span class="en" style="color:${col}">+${mag}</span></div>`;
+  }).join("");
+  return `<div class="edgehead">Edges <span>who wins each stat, and by how much</span></div>${rows}`;
 }
 
 function panel(offT, defT) {
@@ -647,7 +667,7 @@ function panel(offT, defT) {
         ${block(defT,"defense","Defense")}
       </table></div>
       <div class="panelfoot">
-        <div class="edgestrip">${edges(offT,defT)}</div>
+        <div class="edges">${edges(offT,defT)}</div>
         <img class="ghost" src="${LOGOS[defT]}" alt="" aria-hidden="true">
       </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game

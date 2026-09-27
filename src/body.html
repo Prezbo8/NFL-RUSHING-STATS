@@ -214,19 +214,28 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// Percentile gap on the three core stats, offense minus the defense stopping it.
+// One row per core stat: who holds the edge, and by how much. The magnitude is
+// a percentile gap, so a rushing offense and a defense's "allowed" version of the
+// same stat can be compared at all. Always stated from the winner's side, so the
+// number is never negative.
 function edges(offT, defT) {
-  return ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
+  const rows = ["dvoa","succ_pct","epa_att","aybco","stf_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
-    if (!o || !d) return null;
+    if (!o || !d) return "";
     const gap = Math.round(o.pct - d.pct);
-    const col = COLS.find(c=>c.k===k);
-    const lab = col.label.replace(/<br>\//g,"/").replace(/<br>/g," ");
-    if (Math.abs(gap) < 8) return `<span class="echip">${lab} <b>even</b></span>`;
-    const win = gap > 0 ? offT : defT;
-    const colr = gap > 0 ? "var(--tOff)" : "var(--tDef)";
-    return `<span class="echip on" style="color:${colr}">${lab} <b>${win} ${gap>0?"+":""}${gap}</b></span>`;
-  }).filter(Boolean).join("");
+    const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
+    if (Math.abs(gap) < 8)
+      return `<div class="edgerow even"><span class="es">${lab}</span><span class="et">even</span>
+        <span class="eb"></span><span class="en">—</span></div>`;
+    const win  = gap > 0 ? offT : defT;
+    const col  = gap > 0 ? "var(--tOff)" : "var(--tDef)";
+    const mag  = Math.abs(gap);
+    return `<div class="edgerow"><span class="es">${lab}</span>
+      <span class="et" style="color:${col}">${win}</span>
+      <span class="eb"><i style="width:${mag}%;background:${col}"></i></span>
+      <span class="en" style="color:${col}">+${mag}</span></div>`;
+  }).join("");
+  return `<div class="edgehead">Edges <span>who wins each stat, and by how much</span></div>${rows}`;
 }
 
 function panel(offT, defT) {
@@ -252,7 +261,7 @@ function panel(offT, defT) {
         ${block(defT,"defense","Defense")}
       </table></div>
       <div class="panelfoot">
-        <div class="edgestrip">${edges(offT,defT)}</div>
+        <div class="edges">${edges(offT,defT)}</div>
         <img class="ghost" src="${LOGOS[defT]}" alt="" aria-hidden="true">
       </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game

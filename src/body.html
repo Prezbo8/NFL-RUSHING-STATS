@@ -298,10 +298,11 @@ let rkSide = "offense", rkKey = "dvoa", rkBest = true;
 
 // league rank of a value within its column, direction-aware. 1 = best.
 function rankOf(col, side, team) {
-  if (col.neutral) return null;                    // no better/worse, so no tier
   const v = DATA[team][side][col.k];
   if (v == null) return null;
-  const high = side === "offense" ? col.offHigh : col.defHigh;
+  // neutral columns have no better/worse, so rank them high-to-low purely to
+  // give the position column something consistent to show
+  const high = col.neutral ? true : (side === "offense" ? col.offHigh : col.defHigh);
   const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(x=>x!=null)
                     .sort((a,b)=> high ? b-a : a-b);
   return vals.indexOf(v) + 1;
@@ -330,10 +331,11 @@ function renderRankings() {
   document.getElementById("rankbody").innerHTML = rows.map((t,i)=>{
     const cells = RANK_COLS.map(c=>{
       const v = DATA[t][rkSide][c.k];
-      const cls = [c.k===rkKey ? "lead" : "", rkClass(rankOf(c, rkSide, t))].filter(Boolean).join(" ");
+      const cls = [c.k===rkKey ? "lead" : "", c.neutral ? "" : rkClass(rankOf(c, rkSide, t))].filter(Boolean).join(" ");
       return `<td class="${cls}"><span>${fmt(v,c.dp)}</span></td>`;
     }).join("");
-    return `<tr><td class="num"><span>${i+1}</span></td>
+    const pos = rankOf(col, rkSide, t);
+    return `<tr><td class="num"><span>${pos ?? i+1}</span></td>
       <td class="tm"><span><img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b></span></td>${cells}</tr>`;
   }).join("");
 

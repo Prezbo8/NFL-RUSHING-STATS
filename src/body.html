@@ -187,42 +187,40 @@ const TICK_STATS = [
   {k:"exp_pct",  label:"Exp %",  dp:1},
 ];
 
-function tickerGroups(side, best) {
-  return TICK_STATS.map(st=>{
+function tickerRows(side, best) {
+  return TICK_STATS.flatMap(st=>{
     const col = COLS.find(c=>c.k===st.k) || RANK_COLS.find(c=>c.k===st.k);
     const high = side==="offense" ? col.offHigh : col.defHigh;
     const rows = TEAMS.map(t=>({t, v:DATA[t][side][st.k]})).filter(o=>o.v!=null)
       .sort((a,b)=> high ? b.v-a.v : a.v-b.v);
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
-    const items = pick.map((o,i)=>{
+    return pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem"><img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tc(o.t)}">${o.t}</b><span>${o.v.toFixed(st.dp)}</span>
-        <i>#${rank}</i></span>`;
-    }).join("");
-    return `<span class="tickgrp"><span class="tickstat">${st.label}</span>${items}</span>`;
+      return `<span class="tickitem"><span class="tickstat">${st.label}</span>
+        <img src="${LOGOS[o.t]}" alt=""><b style="color:${tc(o.t)}">${o.t}</b>
+        <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
+    });
   }).join("");
 }
 
 function buildTickers() {
   const defs = [
-    {side:"offense", best:true,  cls:"hot",  label:"Rushing Offense · Top 5 \u{1F525}"},
-    {side:"offense", best:false, cls:"cold", label:"Rushing Offense · Bottom 5 \u{2744}\u{FE0F}"},
-    {side:"defense", best:true,  cls:"hot",  label:"Rushing Defense · Top 5 \u{1F525}"},
-    {side:"defense", best:false, cls:"cold", label:"Rushing Defense · Bottom 5 \u{2744}\u{FE0F}"},
+    {side:"offense", best:true,  cls:"hot",  a:"Rushing Offense", b:"Top 5 \u{1F525}"},
+    {side:"offense", best:false, cls:"cold", a:"Rushing Offense", b:"Bottom 5 \u{2744}\u{FE0F}"},
+    {side:"defense", best:true,  cls:"hot",  a:"Rushing Defense", b:"Top 5 \u{1F525}"},
+    {side:"defense", best:false, cls:"cold", a:"Rushing Defense", b:"Bottom 5 \u{2744}\u{FE0F}"},
   ];
   document.getElementById("tickers").innerHTML = defs.map(d=>{
-    const inner = tickerGroups(d.side, d.best);
+    const inner = tickerRows(d.side, d.best);
     return `<div class="tick ${d.cls}">
-      <span class="ticklabel">${d.label}</span>
+      <span class="ticklabel">${d.a}<s>${d.b}</s></span>
       <div class="tickwrap"><div class="ticktrack">${inner}${inner}</div></div></div>`;
   }).join("");
 
-  // one speed for all four, regardless of how wide each track ends up
   requestAnimationFrame(()=>{
     for (const tr of document.querySelectorAll(".ticktrack")) {
-      const px = tr.scrollWidth / 2;
-      tr.style.animationDuration = Math.max(28, Math.round(px / 42)) + "s";
+      const px = tr.scrollHeight / 2;
+      tr.style.animationDuration = Math.max(24, Math.round(px / 14)) + "s";
     }
   });
 }

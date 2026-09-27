@@ -206,25 +206,30 @@ function tickerPanels(side, best) {
 }
 
 // Every row of a stat is visible, so the only motion is the slide across to
-// the next stat.
+// the next stat. One timer drives all four strips so they change together --
+// staggering them made the row look restless.
 const DWELL_MS = 11000, H_MS = 1000;
 
-function runTicker(tick, delay) {
-  const strip = tick.querySelector(".hstrip");
-  const panels = [...strip.children];
+function runTickers(count) {
+  const strips = [...document.querySelectorAll(".hstrip")];
+  if (!strips.length) return;
   let i = 0, paused = false;
-  tick.addEventListener("mouseenter", ()=>{ paused = true; });
-  tick.addEventListener("mouseleave", ()=>{ paused = false; });
-
+  // hovering any one ticker holds all of them, which keeps them in step
+  for (const t of document.querySelectorAll(".tick")) {
+    t.addEventListener("mouseenter", ()=>{ paused = true; });
+    t.addEventListener("mouseleave", ()=>{ paused = false; });
+  }
   const step = () => {
     if (paused) return setTimeout(step, 400);
-    i = (i + 1) % panels.length;
-    // wrapping back to the first stat snaps rather than rewinding through all six
-    strip.style.transition = i === 0 ? "none" : `transform ${H_MS}ms cubic-bezier(.65,0,.35,1)`;
-    strip.style.transform = `translateX(-${i * 100}%)`;
+    i = (i + 1) % count;
+    for (const s of strips) {
+      // wrapping back to the first stat snaps rather than rewinding through all six
+      s.style.transition = i === 0 ? "none" : `transform ${H_MS}ms cubic-bezier(.65,0,.35,1)`;
+      s.style.transform = `translateX(-${i * 100}%)`;
+    }
     setTimeout(step, DWELL_MS + H_MS);
   };
-  setTimeout(step, delay);
+  setTimeout(step, DWELL_MS);
 }
 
 function buildTickers() {
@@ -240,7 +245,7 @@ function buildTickers() {
       <div class="tickwrap"><div class="hstrip">${tickerPanels(d.side, d.best)}</div></div>
     </div>`).join("");
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  document.querySelectorAll(".tick").forEach((t,n)=> runTicker(t, 600 + n * 500));
+  runTickers(TICK_STATS.length);
 }
 
 function wireTips(){

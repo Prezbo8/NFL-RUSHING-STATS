@@ -7,6 +7,10 @@
       <div class="week" id="weeklabel"></div>
     </div>
   </div>
+  <div class="live" id="live">
+    <span class="row"><i class="dot"></i><span id="livetext">Live · Supabase</span></span>
+    <span class="src" id="livedate"></span>
+  </div>
 </header>
 
 <div class="tabs" role="tablist">
@@ -436,6 +440,22 @@ function wirePicker(slot){
     document.getElementById("weeklabel").innerHTML = `${yr} <s>|</s> ${label}`;
   })();
   document.getElementById("nfllogo").src = NFL_LOGO;
+
+  // Snapshot freshness. The scraper runs Sun/Tue/Wed, so anything older than
+  // about four days means a run failed and the numbers on screen are stale.
+  (function freshness(){
+    const on = DATA[TEAMS[0]].offense.scraped_on;
+    if (!on) return;
+    const d = new Date(on + "T12:00:00");
+    const days = Math.floor((Date.now() - d) / 864e5);
+    document.getElementById("livedate").textContent =
+      "data " + d.toLocaleDateString(undefined,{month:"short",day:"numeric"}) +
+      (days <= 0 ? " · today" : days === 1 ? " · yesterday" : ` · ${days} days ago`);
+    if (days > 4) {
+      document.getElementById("live").classList.add("stale");
+      document.getElementById("livetext").textContent = "Stale · Supabase";
+    }
+  })();
   render();
   bindRankings();
   wireTips();

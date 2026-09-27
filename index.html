@@ -397,25 +397,25 @@ tbody td.tm span,tbody td.num span{background:none}
 :root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
 :root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
 
-/* Two axes: rows crawl upward inside one stat, then the whole strip slides
-   sideways to the next stat. */
-.tickwrap{position:relative;height:124px;overflow:hidden}
+/* All five rows of a stat show at once; the motion is the strip sliding
+   sideways to the next stat. Height follows the tallest panel. */
+.tickwrap{position:relative;overflow:hidden}
 .hstrip{display:flex;height:100%;will-change:transform}
-.tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;padding-bottom:5px}
 .tickstat{flex:none;padding:5px 12px 3px;font-family:"Archivo",system-ui,sans-serif;font-weight:700;
   font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.vport{flex:1;overflow:hidden}
-.vtrack{will-change:transform}
+.vport{flex:1}
+
 .tickitem{display:grid;grid-template-columns:19px auto 1fr;gap:8px;align-items:center;
-  padding:5px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  padding:7px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tickitem img{width:19px;height:19px;object-fit:contain}
 .tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px}
 .tickitem span.v{color:var(--ink);font-weight:600;text-align:right}
 .tickitem i{font-style:normal;color:var(--faint);font-size:10.5px;margin-left:5px}
 @media (max-width:900px){.tickers{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.tickers{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.hstrip,.vtrack{transition:none!important;transform:none!important}
-  .tickwrap{height:auto;overflow:visible}.hstrip{flex-direction:column}.tickpanel{flex:none}}
+@media (prefers-reduced-motion:reduce){.hstrip{transition:none!important;transform:none!important;
+  flex-direction:column}.tickwrap{overflow:visible}.tickpanel{flex:none}}
 </style>
 <style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
@@ -666,35 +666,24 @@ function tickerPanels(side, best) {
   }).join("");
 }
 
-// Crawl the rows up inside one stat, pause, slide across to the next.
-const V_MS = 7000, HOLD_MS = 1600, H_MS = 900;
+// Every row of a stat is visible, so the only motion is the slide across to
+// the next stat.
+const DWELL_MS = 6500, H_MS = 900;
 
 function runTicker(tick, delay) {
   const strip = tick.querySelector(".hstrip");
   const panels = [...strip.children];
-  let i = 0, stopped = false;
-  tick.addEventListener("mouseenter", ()=>{ stopped = true; });
-  tick.addEventListener("mouseleave", ()=>{ stopped = false; });
+  let i = 0, paused = false;
+  tick.addEventListener("mouseenter", ()=>{ paused = true; });
+  tick.addEventListener("mouseleave", ()=>{ paused = false; });
 
   const step = () => {
-    if (stopped) return setTimeout(step, 400);
-    const vt = panels[i].querySelector(".vtrack");
-    const port = panels[i].querySelector(".vport");
-    const over = Math.max(0, vt.scrollHeight - port.clientHeight);
-    vt.style.transition = `transform ${V_MS}ms linear`;
-    vt.style.transform = `translateY(-${over}px)`;
-    setTimeout(()=>{
-      const last = i;
-      i = (i + 1) % panels.length;
-      // wrapping back to the first stat snaps rather than rewinding through all six
-      strip.style.transition = i === 0 ? "none" : `transform ${H_MS}ms cubic-bezier(.65,0,.35,1)`;
-      strip.style.transform = `translateX(-${i * 100}%)`;
-      setTimeout(()=>{
-        const pv = panels[last].querySelector(".vtrack");
-        pv.style.transition = "none"; pv.style.transform = "translateY(0)";
-        step();
-      }, H_MS + 120);
-    }, V_MS + HOLD_MS);
+    if (paused) return setTimeout(step, 400);
+    i = (i + 1) % panels.length;
+    // wrapping back to the first stat snaps rather than rewinding through all six
+    strip.style.transition = i === 0 ? "none" : `transform ${H_MS}ms cubic-bezier(.65,0,.35,1)`;
+    strip.style.transform = `translateX(-${i * 100}%)`;
+    setTimeout(step, DWELL_MS + H_MS);
   };
   setTimeout(step, delay);
 }

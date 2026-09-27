@@ -390,23 +390,23 @@ tbody td.tm span,tbody td.num span{background:none}
 :root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
 :root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
 
-/* Two axes: rows crawl upward inside one stat, then the whole strip slides
-   sideways to the next stat. */
-.tickwrap{position:relative;height:124px;overflow:hidden}
+/* All five rows of a stat show at once; the motion is the strip sliding
+   sideways to the next stat. Height follows the tallest panel. */
+.tickwrap{position:relative;overflow:hidden}
 .hstrip{display:flex;height:100%;will-change:transform}
-.tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.tickpanel{flex:0 0 100%;min-width:0;display:flex;flex-direction:column;padding-bottom:5px}
 .tickstat{flex:none;padding:5px 12px 3px;font-family:"Archivo",system-ui,sans-serif;font-weight:700;
   font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
-.vport{flex:1;overflow:hidden}
-.vtrack{will-change:transform}
+.vport{flex:1}
+
 .tickitem{display:grid;grid-template-columns:19px auto 1fr;gap:8px;align-items:center;
-  padding:5px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  padding:7px 12px;font-size:13.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tickitem img{width:19px;height:19px;object-fit:contain}
 .tickitem b{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px}
 .tickitem span.v{color:var(--ink);font-weight:600;text-align:right}
 .tickitem i{font-style:normal;color:var(--faint);font-size:10.5px;margin-left:5px}
 @media (max-width:900px){.tickers{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.tickers{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.hstrip,.vtrack{transition:none!important;transform:none!important}
-  .tickwrap{height:auto;overflow:visible}.hstrip{flex-direction:column}.tickpanel{flex:none}}
+@media (prefers-reduced-motion:reduce){.hstrip{transition:none!important;transform:none!important;
+  flex-direction:column}.tickwrap{overflow:visible}.tickpanel{flex:none}}
 </style>

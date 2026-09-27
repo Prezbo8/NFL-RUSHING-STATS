@@ -253,6 +253,47 @@ th[data-def]:hover,th[data-def]:focus-visible{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){#tip{transition:none}}
 </style>
 <style>
+/* Rank tiers: 1-5 neon green, 6-10 green, 11-15 light green,
+   16-25 light red, 26-32 red. Shared by the rankings table and the
+   RANK rows on the matchup tab. */
+:root{
+  --t1-bg:rgba(0,214,102,.46); --t1-fg:#04371a;
+  --t2-bg:rgba(0,190,96,.26);  --t2-fg:#0a4522;
+  --t3-bg:rgba(0,180,96,.11);  --t3-fg:#14512c;
+  --t4-bg:rgba(216,66,54,.12); --t4-fg:#6b1f19;
+  --t5-bg:rgba(214,48,38,.30); --t5-fg:#5c1410;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
+  --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
+  --t3-bg:rgba(52,196,120,.10); --t3-fg:#82c7a1;
+  --t4-bg:rgba(244,96,86,.13);  --t4-fg:#eb9c95;
+  --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
+}}
+:root[data-theme="dark"]{
+  --t1-bg:rgba(57,255,142,.30); --t1-fg:#6effb0;
+  --t2-bg:rgba(52,214,120,.20); --t2-fg:#63dc9b;
+  --t3-bg:rgba(52,196,120,.10); --t3-fg:#82c7a1;
+  --t4-bg:rgba(244,96,86,.13);  --t4-fg:#eb9c95;
+  --t5-bg:rgba(244,80,68,.28);  --t5-fg:#ff9a90;
+}
+td.t1 span{background:var(--t1-bg);color:var(--t1-fg);font-weight:700}
+td.t2 span{background:var(--t2-bg);color:var(--t2-fg);font-weight:600}
+td.t3 span{background:var(--t3-bg);color:var(--t3-fg)}
+td.t4 span{background:var(--t4-bg);color:var(--t4-fg)}
+td.t5 span{background:var(--t5-bg);color:var(--t5-fg);font-weight:600}
+/* team name and position columns stay neutral */
+tbody td.tm span,tbody td.num span{background:none}
+.tierkey{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--faint);
+  font-family:"Public Sans",system-ui,sans-serif}
+.tierkey i{font-style:normal;padding:3px 8px;border-radius:2px;font-weight:600;font-size:11.5px}
+.tierkey i.t1{background:var(--t1-bg);color:var(--t1-fg)}
+.tierkey i.t2{background:var(--t2-bg);color:var(--t2-fg)}
+.tierkey i.t3{background:var(--t3-bg);color:var(--t3-fg)}
+.tierkey i.t4{background:var(--t4-bg);color:var(--t4-fg)}
+.tierkey i.t5{background:var(--t5-bg);color:var(--t5-fg)}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -303,7 +344,8 @@ th[data-def]:hover,th[data-def]:focus-visible{color:var(--ink)}
       <button id="side-off" aria-pressed="true">Rushing offense</button>
       <button id="side-def" aria-pressed="false">Rushing defense</button>
     </div>
-    <div class="hint" id="sorthint"></div>
+    <div class="tierkey"><span id="sorthint"></span>
+      <i class="t1">1-5</i><i class="t2">6-10</i><i class="t3">11-15</i><i class="t4">16-25</i><i class="t5">26-32</i></div>
   </div>
   <div class="tablewrap"><table id="ranktable"><thead><tr id="rankhead"></tr></thead><tbody id="rankbody"></tbody></table></div>
 </div>
@@ -437,7 +479,8 @@ for (const side of ["offense","defense"]) {
 
 const fmt = (v,dp)=> v==null ? "—" : v.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
 const ord = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*n%10] || "th");
-const rkClass = r => r==null ? "" : r<=10 ? "rk-good" : r>=23 ? "rk-bad" : "";
+// 1-5 neon green, 6-10 green, 11-15 light green, 16-25 light red, 26-32 red
+const rkClass = r => r==null ? "" : r<=5 ? "t1" : r<=10 ? "t2" : r<=15 ? "t3" : r<=25 ? "t4" : "t5";
 
 const DEFS = {
   rushing_yards:["Total Rushing Yards","Season total. Volume, not quality — it rises with how often a team runs."],
@@ -591,14 +634,15 @@ const RANK_COLS = [
 
 let rkSide = "offense", rkKey = "dvoa", rkBest = true;
 
-// percentile of a value within its column, oriented so 100 = best
-function pctOf(col, side, team) {
-  const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(v=>v!=null);
+// league rank of a value within its column, direction-aware. 1 = best.
+function rankOf(col, side, team) {
+  if (col.neutral) return null;                    // no better/worse, so no tier
   const v = DATA[team][side][col.k];
-  if (v == null || vals.length < 2) return null;
-  const high = col.neutral ? true : (side==="offense" ? col.offHigh : col.defHigh);
-  const worse = vals.filter(x=> high ? x < v : x > v).length;
-  return worse / (vals.length-1) * 100;
+  if (v == null) return null;
+  const high = side === "offense" ? col.offHigh : col.defHigh;
+  const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(x=>x!=null)
+                    .sort((a,b)=> high ? b-a : a-b);
+  return vals.indexOf(v) + 1;
 }
 
 function renderRankings() {
@@ -624,10 +668,8 @@ function renderRankings() {
   document.getElementById("rankbody").innerHTML = rows.map((t,i)=>{
     const cells = RANK_COLS.map(c=>{
       const v = DATA[t][rkSide][c.k];
-      const p = c.neutral ? null : pctOf(c, rkSide, t);
-      const a = p==null ? 0 : Math.max(0, (p-45)/55) * 0.30;
-      const bg = a > 0.01 ? ` style="background:rgba(var(--heat),${a.toFixed(3)})"` : "";
-      return `<td class="${c.k===rkKey?"lead":""}"><span${bg}>${fmt(v,c.dp)}</span></td>`;
+      const cls = [c.k===rkKey ? "lead" : "", rkClass(rankOf(c, rkSide, t))].filter(Boolean).join(" ");
+      return `<td class="${cls}"><span>${fmt(v,c.dp)}</span></td>`;
     }).join("");
     return `<tr><td class="num"><span>${i+1}</span></td>
       <td class="tm"><span><img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b></span></td>${cells}</tr>`;

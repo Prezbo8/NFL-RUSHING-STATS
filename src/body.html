@@ -40,7 +40,8 @@
       <button id="side-off" aria-pressed="true">Rushing offense</button>
       <button id="side-def" aria-pressed="false">Rushing defense</button>
     </div>
-    <div class="hint" id="sorthint"></div>
+    <div class="tierkey"><span id="sorthint"></span>
+      <i class="t1">1-5</i><i class="t2">6-10</i><i class="t3">11-15</i><i class="t4">16-25</i><i class="t5">26-32</i></div>
   </div>
   <div class="tablewrap"><table id="ranktable"><thead><tr id="rankhead"></tr></thead><tbody id="rankbody"></tbody></table></div>
 </div>
@@ -142,7 +143,8 @@ for (const side of ["offense","defense"]) {
 
 const fmt = (v,dp)=> v==null ? "—" : v.toLocaleString(undefined,{minimumFractionDigits:dp,maximumFractionDigits:dp});
 const ord = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*n%10] || "th");
-const rkClass = r => r==null ? "" : r<=10 ? "rk-good" : r>=23 ? "rk-bad" : "";
+// 1-5 neon green, 6-10 green, 11-15 light green, 16-25 light red, 26-32 red
+const rkClass = r => r==null ? "" : r<=5 ? "t1" : r<=10 ? "t2" : r<=15 ? "t3" : r<=25 ? "t4" : "t5";
 
 const DEFS = {
   rushing_yards:["Total Rushing Yards","Season total. Volume, not quality — it rises with how often a team runs."],
@@ -296,14 +298,15 @@ const RANK_COLS = [
 
 let rkSide = "offense", rkKey = "dvoa", rkBest = true;
 
-// percentile of a value within its column, oriented so 100 = best
-function pctOf(col, side, team) {
-  const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(v=>v!=null);
+// league rank of a value within its column, direction-aware. 1 = best.
+function rankOf(col, side, team) {
+  if (col.neutral) return null;                    // no better/worse, so no tier
   const v = DATA[team][side][col.k];
-  if (v == null || vals.length < 2) return null;
-  const high = col.neutral ? true : (side==="offense" ? col.offHigh : col.defHigh);
-  const worse = vals.filter(x=> high ? x < v : x > v).length;
-  return worse / (vals.length-1) * 100;
+  if (v == null) return null;
+  const high = side === "offense" ? col.offHigh : col.defHigh;
+  const vals = TEAMS.map(t=>DATA[t][side][col.k]).filter(x=>x!=null)
+                    .sort((a,b)=> high ? b-a : a-b);
+  return vals.indexOf(v) + 1;
 }
 
 function renderRankings() {
@@ -329,10 +332,8 @@ function renderRankings() {
   document.getElementById("rankbody").innerHTML = rows.map((t,i)=>{
     const cells = RANK_COLS.map(c=>{
       const v = DATA[t][rkSide][c.k];
-      const p = c.neutral ? null : pctOf(c, rkSide, t);
-      const a = p==null ? 0 : Math.max(0, (p-45)/55) * 0.30;
-      const bg = a > 0.01 ? ` style="background:rgba(var(--heat),${a.toFixed(3)})"` : "";
-      return `<td class="${c.k===rkKey?"lead":""}"><span${bg}>${fmt(v,c.dp)}</span></td>`;
+      const cls = [c.k===rkKey ? "lead" : "", rkClass(rankOf(c, rkSide, t))].filter(Boolean).join(" ");
+      return `<td class="${cls}"><span>${fmt(v,c.dp)}</span></td>`;
     }).join("");
     return `<tr><td class="num"><span>${i+1}</span></td>
       <td class="tm"><span><img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b></span></td>${cells}</tr>`;

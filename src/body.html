@@ -197,7 +197,7 @@ function tickerPanels(side, best) {
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
       return `<span class="tickitem"><img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tc(o.t)}">${o.t}</b>
+        <b style="color:${tc(o.t)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

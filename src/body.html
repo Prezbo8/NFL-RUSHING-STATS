@@ -214,31 +214,31 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// One row per core stat. The track diverges from the centre — the offence's
-// edge grows right, the defence's left — and the ranks behind each gap make
-// the number checkable against the table above.
+// One row per core stat, as a straight rank comparison: the offence's league
+// rank against the rank of the defence facing it. Both are 1 = best within
+// their own side, so the smaller number wins and the difference is the edge.
 function edges(offT, defT) {
   const rows = ["dvoa","succ_pct","aybco","ayaco","stf_pct","exp_pct"].map(k=>{
     const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
     if (!o || !d) return "";
-    const gap = Math.round(o.pct - d.pct);
+    const diff = d.rank - o.rank;                 // positive: the offence is better ranked
+    const even = Math.abs(diff) < 3;
+    const offWin = diff > 0;
     const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
-    const ranks = `<span class="er">#${o.rank} <s>vs</s> #${d.rank}</span>`;
-    if (Math.abs(gap) < 8)
-      return `<div class="edgerow even"><span class="es">${lab}</span>
-        <span class="eb"></span><span class="en">even</span>${ranks}</div>`;
-    const right = gap > 0;
-    const col = right ? "var(--tOff)" : "var(--tDef)";
-    const mag = Math.abs(gap);
-    return `<div class="edgerow"><span class="es">${lab}</span>
-      <span class="eb"><i class="${right?"r":"l"}" style="width:${mag/2}%;background:${col}"></i></span>
-      <span class="en" style="color:${col}">+${mag}</span>${ranks}</div>`;
+    const side = (team, tag, rank, win, col) =>
+      `<span class="side ${tag==="off"?"o":"d"}${win?" win":""}">
+         <b class="tm" style="color:${col}">${team}</b><span class="sd">${tag}</span>
+         <span class="rk">#${rank}</span></span>`;
+    const gap = even ? "even"
+      : `<span style="color:${offWin?"var(--tOff)":"var(--tDef)"}">${offWin?offT:defT} +${Math.abs(diff)}</span>`;
+    return `<div class="edgerow${even?" even":""}">
+      <span class="es">${lab}</span>
+      ${side(offT,"off",o.rank,!even&&offWin,"var(--tOff)")}
+      <span class="vs">vs</span>
+      ${side(defT,"def",d.rank,!even&&!offWin,"var(--tDef)")}
+      <span class="gap">${gap}</span></div>`;
   }).join("");
-  return `<div class="edgehead">Edges
-    <span class="dirs">
-      <b style="color:var(--tDef)">&#9664; ${defT} def</b>
-      <b style="color:var(--tOff)">${offT} off &#9654;</b>
-    </span></div>${rows}`;
+  return `<div class="edgehead">Edges — league rank, offence vs the defence facing it</div>${rows}`;
 }
 
 function panel(offT, defT) {

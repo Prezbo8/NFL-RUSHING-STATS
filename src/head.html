@@ -329,46 +329,20 @@ table.model tr.vals td:not(.side) span{text-align:center}
 table.model th:not(.side){text-align:center}
 </style>
 <style>
-.edges{min-width:0;flex:1}
-.edgehead{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;padding:0 8px 9px;
-  font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:11px;letter-spacing:.13em;
-  text-transform:uppercase;color:var(--faint)}
-.edgehead .dirs{margin-left:auto;display:flex;gap:14px;font-size:11.5px;letter-spacing:.06em}
-.edgerow{display:grid;grid-template-columns:92px 1fr 46px 74px;gap:11px;align-items:center;
-  padding:5px 8px;font-size:13.5px}
-.edgerow .es{color:var(--muted)}
-/* Track diverges from the centre: the offence grows right, the defence left,
-   so the balance of the matchup reads as a shape before you read a number. */
-.edgerow .eb{position:relative;height:10px;background:var(--sunk);border-radius:1px;min-width:60px}
-.edgerow .eb::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;
-  background:var(--line-strong)}
-.edgerow .eb i{position:absolute;top:0;bottom:0;border-radius:1px}
-.edgerow .eb i.r{left:50%}
-.edgerow .eb i.l{right:50%}
-.edgerow .en{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
-.edgerow .er{text-align:right;font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums;
-  white-space:nowrap}
-.edgerow .er s{text-decoration:none;opacity:.6;padding:0 1px}
-.edgerow.even .en{color:var(--faint);font-weight:500}
-@media (max-width:620px){.edgerow{grid-template-columns:78px 1fr 42px;gap:8px;font-size:13px}
-  .edgerow .er{display:none}.edgehead .dirs{margin-left:0;width:100%}}
-</style>
-<style>
-/* Rank tiers as an ordered ramp rather than five unrelated colours.
-   One green hue stepping down in strength across 1-5 / 6-10 / 11-15, then a
-   hue shift to amber and red for the bottom two. Strength tracks distance from
-   average, so the middle tier is the quietest cell in the row. */
+/* Rank tiers step through five distinct hues rather than shading one colour.
+   Green -> lime -> gold -> orange -> red, so each tier is its own step and the
+   ramp reads left to right the way a heat scale should. */
 :root{
-  --t1-bg:#8FDCAB; --t2-bg:#BCE8CB; --t3-bg:#E4F0E8;
-  --t4-bg:#F9DFA6; --t5-bg:#F2B9B1; --tier-fg:#101619;
+  --t1-bg:#A6E0BB; --t2-bg:#D7E9A4; --t3-bg:#F6E5A3; --t4-bg:#F8CB9F; --t5-bg:#F3B9B1;
+  --tier-fg:#101619;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --t1-bg:#137A43; --t2-bg:#175C39; --t3-bg:#1D4030;
-  --t4-bg:#6A5117; --t5-bg:#8C2F27; --tier-fg:#FFFFFF;
+  --t1-bg:#14743F; --t2-bg:#4A6B16; --t3-bg:#7A6112; --t4-bg:#8A4715; --t5-bg:#8C2C25;
+  --tier-fg:#FFFFFF;
 }}
 :root[data-theme="dark"]{
-  --t1-bg:#137A43; --t2-bg:#175C39; --t3-bg:#1D4030;
-  --t4-bg:#6A5117; --t5-bg:#8C2F27; --tier-fg:#FFFFFF;
+  --t1-bg:#14743F; --t2-bg:#4A6B16; --t3-bg:#7A6112; --t4-bg:#8A4715; --t5-bg:#8C2C25;
+  --tier-fg:#FFFFFF;
 }
 td.t1 span{background:var(--t1-bg);color:var(--tier-fg)}
 td.t2 span{background:var(--t2-bg);color:var(--tier-fg)}
@@ -382,4 +356,24 @@ tbody td.tm span,tbody td.num span{background:none}
 .tierkey i.t3{background:var(--t3-bg);color:var(--tier-fg)}
 .tierkey i.t4{background:var(--t4-bg);color:var(--tier-fg)}
 .tierkey i.t5{background:var(--t5-bg);color:var(--tier-fg)}
+</style>
+<style>
+.edges{min-width:0;flex:1}
+.edgehead{padding:0 8px 9px;font-family:"Archivo",system-ui,sans-serif;font-weight:600;
+  font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint)}
+.edgerow{display:grid;grid-template-columns:96px 1fr 26px 1fr 60px;gap:10px;align-items:center;
+  padding:5px 8px;font-size:13.5px}
+.edgerow .es{color:var(--muted)}
+.edgerow .side{display:flex;align-items:baseline;gap:6px;white-space:nowrap;opacity:.5}
+.edgerow .side.win{opacity:1}
+.edgerow .side.o{justify-content:flex-end;text-align:right}
+.edgerow .tm{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13.5px}
+.edgerow .sd{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.edgerow .rk{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.edgerow .side.win .rk{font-size:15px}
+.edgerow .vs{text-align:center;font-size:11px;color:var(--faint);letter-spacing:.06em}
+.edgerow .gap{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.edgerow.even .gap{color:var(--faint);font-weight:500}
+@media (max-width:620px){.edgerow{grid-template-columns:74px 1fr 20px 1fr;gap:7px;font-size:12.5px}
+  .edgerow .gap{display:none}.edgerow .sd{display:none}}
 </style>

@@ -647,3 +647,22 @@ table.model th{color:var(--ink);font-weight:700}
 .bkrow{grid-template-columns:120px 84px 68px 106px}
 .logtable th.bk,.logtable td.bk{width:398px}
 </style>
+<style>
+.edges{min-width:0;flex:1;padding-top:12px}
+.edgetable{border-collapse:collapse;table-layout:auto;width:auto;border:1px solid var(--grid);
+  font-variant-numeric:tabular-nums}
+.edgetable th{font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink);text-align:center;
+  padding:7px 14px;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);
+  white-space:nowrap}
+.edgetable td{padding:7px 14px;text-align:center;font-size:15px;font-weight:700;
+  border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);white-space:nowrap}
+.edgetable th:last-child,.edgetable td:last-child{border-right:0}
+.edgetable tr:last-child td{border-bottom:0}
+.edgetable th.est,.edgetable td.est{text-align:left;font-weight:700;color:var(--muted);
+  font-size:13.5px;min-width:96px}
+.edgetable th.est{color:var(--ink);font-size:11px}
+.edgetable td.erk{color:var(--muted)}
+.edgetable td.erk.lose{opacity:.45}
+.edgetable td.edf{color:var(--faint);font-size:13px;font-weight:600}
+</style>

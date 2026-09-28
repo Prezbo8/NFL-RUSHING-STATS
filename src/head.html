@@ -653,3 +653,10 @@ table.model th{color:var(--ink);font-weight:700}
 @media (prefers-reduced-motion:reduce){.vs,.vs::after{transition:none}}
 @media (max-width:720px){.vs{display:block;align-self:center;margin:0 auto}}
 </style>
+<style>
+/* the name track was auto-sized, so the badge started wherever the team name
+   happened to end; a fixed track lines every badge up in one column */
+.logtable td.wk .gm{grid-template-columns:26px 18px 22px 112px auto}
+.logtable td.wk u{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.rrk{margin-left:0;justify-self:start;white-space:nowrap}
+</style>

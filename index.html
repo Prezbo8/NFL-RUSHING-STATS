@@ -454,14 +454,14 @@ tbody td.tm span,tbody td.num span{background:none}
 <div id="view-matchup" role="tabpanel" aria-labelledby="tab-matchup">
 <div class="pickers">
   <div class="pick a" id="pickA">
-    <label for="teamA">Team A</label>
+    <label for="teamA">Rushing Offense</label>
     <div class="field"><img id="logoA" alt=""><input id="teamA" type="text" autocomplete="off"
       role="combobox" aria-expanded="false" aria-controls="listA" placeholder="Type a team..."></div>
     <div class="combo" id="listA" role="listbox" hidden></div>
   </div>
   <div class="vs">VS</div>
   <div class="pick b" id="pickB">
-    <label for="teamB">Team B</label>
+    <label for="teamB">Rushing Defense</label>
     <div class="field"><img id="logoB" alt=""><input id="teamB" type="text" autocomplete="off"
       role="combobox" aria-expanded="false" aria-controls="listB" placeholder="Type a team..."></div>
     <div class="combo" id="listB" role="listbox" hidden></div>
@@ -810,7 +810,7 @@ function panel(offT, defT) {
 
 function render() {
   const a = SEL.A, b = SEL.B;
-  document.getElementById("panels").innerHTML = panel(a,b) + panel(b,a);
+  document.getElementById("panels").innerHTML = panel(a,b);
 }
 
 const RANK_COLS = [

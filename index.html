@@ -541,6 +541,22 @@ tbody td.tm span,tbody td.num span{background:none}
 .logtable td.bk,.logtable th.bk{padding-left:10px;padding-right:10px}
 </style>
 <style>
+/* --line is #222E32 on a #151D20 surface: technically drawn, visually absent.
+   The game log needs dividers you can actually see. */
+:root{--grid:rgba(20,30,35,.20)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--grid:rgba(255,255,255,.17)}}
+:root[data-theme="dark"]{--grid:rgba(255,255,255,.17)}
+.logtable th,.logtable td{border-right:1px solid var(--grid)}
+.logtable th:last-child,.logtable td:last-child{border-right:0}
+.logtable td{border-bottom:1px solid var(--grid)}
+.logtable thead th{border-bottom:1px solid var(--grid)}
+.logtable tbody tr:last-child td{border-bottom:0}
+.bkrow{border-bottom:1px solid var(--grid)}
+.bklist .bkrow:last-child{border-bottom:0}
+.bkrow > *{border-right:1px solid var(--grid)}
+.bkrow > *:last-child{border-right:0}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}

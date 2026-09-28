@@ -61,7 +61,7 @@
       attempts and games carry no rank, same as the sheet.</li>
     <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
-    <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
+    <li><b>The last ten games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
       which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
     <li><b>Every figure in the tables is raw</b> — what the team actually did. The <b>Grade</b> is
       the exception: its inputs are first adjusted for the defenses or offenses that team faced,
@@ -376,7 +376,7 @@ function buildTickers() {
 // "allowed" line is just the opponent's row for that week.
 function gameLog(team, allowed) {
   const rows = GAMES.filter(g => (allowed ? g.opponent : g.team) === team)
-                    .sort((a,b)=> b.week - a.week).slice(0,5);
+                    .sort((a,b)=> b.week - a.week).slice(0,10);
   if (!rows.length) return `<div class="logempty">No games logged yet.</div>`;
   const body = rows.map(g=>{
     // backs are whoever carried it for the side that was running

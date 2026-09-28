@@ -607,3 +607,31 @@ tbody td.tm span,tbody td.num span{background:none}
 :root:not([data-theme="dark"]) .sc.l{color:#A8322B}
 .scv{font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 </style>
+<style>
+/* line the opponent cell up on a grid so the week, the crest, the name and the
+   badge land in the same place on every row, and the score sits under the name */
+.logtable td.wk .gm{display:grid;grid-template-columns:26px 18px 22px auto auto;gap:6px;
+  align-items:center;justify-content:start}
+.logtable td.wk b{min-width:0;font-size:12.5px;font-weight:700;color:var(--muted);
+  letter-spacing:.04em;text-align:left}
+.logtable td.wk s{margin:0;font-size:11.5px;font-weight:600;color:var(--faint);text-align:center}
+.logtable td.wk img{margin:0;width:22px;height:22px;vertical-align:middle}
+.logtable td.wk u{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.rrk{margin-left:3px;font-weight:700;font-size:10px;color:var(--muted)}
+.logtable td.wk .gs{padding-left:78px;margin-top:4px;gap:8px}
+.sc{font-size:11.5px;font-weight:700;padding:2px 7px}
+.scv{font-size:14px;font-weight:700;color:var(--ink)}
+</style>
+<style>
+/* score sits exactly under the team name */
+.logtable td.wk .gs{padding-left:84px}
+
+/* same grid treatment on the matchup table */
+table.model{border:1px solid var(--grid)}
+table.model th,table.model td{border-right:1px solid var(--grid)}
+table.model th:last-child,table.model td:last-child{border-right:0}
+table.model tr.rks td{border-bottom:1px solid var(--grid)}
+table.model tr:last-child td{border-bottom:0}
+table.model th{border-bottom:1px solid var(--grid)}
+table.model th.side,table.model td.side{border-right:1px solid var(--grid)}
+</style>

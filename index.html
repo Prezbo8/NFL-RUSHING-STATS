@@ -615,6 +615,34 @@ tbody td.tm span,tbody td.num span{background:none}
 .scv{font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 </style>
 <style>
+/* line the opponent cell up on a grid so the week, the crest, the name and the
+   badge land in the same place on every row, and the score sits under the name */
+.logtable td.wk .gm{display:grid;grid-template-columns:26px 18px 22px auto auto;gap:6px;
+  align-items:center;justify-content:start}
+.logtable td.wk b{min-width:0;font-size:12.5px;font-weight:700;color:var(--muted);
+  letter-spacing:.04em;text-align:left}
+.logtable td.wk s{margin:0;font-size:11.5px;font-weight:600;color:var(--faint);text-align:center}
+.logtable td.wk img{margin:0;width:22px;height:22px;vertical-align:middle}
+.logtable td.wk u{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.rrk{margin-left:3px;font-weight:700;font-size:10px;color:var(--muted)}
+.logtable td.wk .gs{padding-left:78px;margin-top:4px;gap:8px}
+.sc{font-size:11.5px;font-weight:700;padding:2px 7px}
+.scv{font-size:14px;font-weight:700;color:var(--ink)}
+</style>
+<style>
+/* score sits exactly under the team name */
+.logtable td.wk .gs{padding-left:84px}
+
+/* same grid treatment on the matchup table */
+table.model{border:1px solid var(--grid)}
+table.model th,table.model td{border-right:1px solid var(--grid)}
+table.model th:last-child,table.model td:last-child{border-right:0}
+table.model tr.rks td{border-bottom:1px solid var(--grid)}
+table.model tr:last-child td{border-bottom:0}
+table.model th{border-bottom:1px solid var(--grid)}
+table.model th.side,table.model td.side{border-right:1px solid var(--grid)}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -1000,8 +1028,11 @@ function gameLog(team, allowed) {
         <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
       .join("") || '<span class="bkrow"><em>—</em></span>';
     const foe = allowed ? g.team : g.opponent;
-    // the opponent's rushing-offense grade rank, so "who did they face" is answered
-    const foeRank = RANK.offense.grade?.[foe]?.rank;
+    // Show the side of the opponent that was actually being tested: our offense
+    // faced their defense, our defense faced their offense.
+    const foeSide = allowed ? "offense" : "defense";
+    const foeRank = RANK[foeSide].grade?.[foe]?.rank;
+    const foeTag = allowed ? "Rush O" : "Rush D";
     // rows in the "allowed" view belong to the opponent, so the score has to be
     // read back from the box team's side or a loss would render as a win
     const pf = allowed ? g.points_against : g.points_for;
@@ -1014,7 +1045,7 @@ function gameLog(team, allowed) {
       <td class="wk">
         <span class="gm"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
           <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u>
-          ${foeRank ? `<span class="rrk">#${foeRank} rush</span>` : ""}</span>
+          ${foeRank ? `<span class="rrk">#${foeRank} ${foeTag}</span>` : ""}</span>
         <span class="gs">${score}</span></td>
       <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
       <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>

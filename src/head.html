@@ -549,3 +549,24 @@ tbody td.tm span,tbody td.num span{background:none}
 .bkrow > *{border-right:1px solid var(--grid)}
 .bkrow > *:last-child{border-right:0}
 </style>
+<style>
+/* Let the table size to its content instead of stretching across the box, so
+   the columns sit together, and center every figure in its column. */
+.logtable{table-layout:auto;width:auto}
+.logtable th:nth-child(1),.logtable td:nth-child(1){width:auto;min-width:170px}
+.logtable th:nth-child(2),.logtable td:nth-child(2),
+.logtable th:nth-child(3),.logtable td:nth-child(3),
+.logtable th:nth-child(4),.logtable td:nth-child(4),
+.logtable th:nth-child(5),.logtable td:nth-child(5){width:58px;text-align:center}
+.logtable th.bk,.logtable td.bk{width:auto}
+.bkrow{grid-template-columns:132px 62px 56px 74px}
+.bkrow > i{text-align:center}
+.bkhead i{text-align:center}
+.logtable td{vertical-align:middle}
+.logtable td.bk{vertical-align:middle}
+</style>
+<style>
+/* pin the backs cell to the width its grid actually needs, so the dividers
+   run the full height of the column instead of stopping short */
+.logtable th.bk,.logtable td.bk{width:344px}
+</style>

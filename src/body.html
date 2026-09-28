@@ -81,6 +81,10 @@
 <script>
 const NAMES = Object.fromEntries(Object.entries(DATA).map(([k,v])=>[k, v.city+" "+v.name]));
 const TEAMS = Object.keys(DATA).sort((x,y)=>NAMES[x].localeCompare(NAMES[y]));
+// FTN codes Cleveland as CLV; show the conventional CLE without touching the
+// key the data is stored under
+const SHOW_ABBR = {CLV:"CLE"};
+const abbr = t => SHOW_ABBR[t] || t;
 
 for (const t of TEAMS) for (const side of ["offense","defense"]) {
   const r = DATA[t][side];
@@ -267,13 +271,14 @@ function gameLog(team, allowed) {
                      .join(" · ") || "—";
     const foe = allowed ? g.team : g.opponent;
     return `<tr>
-      <td class="wk"><b>W${g.week}</b>${allowed ? "vs " : "@ "}${foe}</td>
+      <td class="wk"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
+        <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u></td>
       <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
       <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>
       <td class="bk">${backs}</td></tr>`;
   }).join("");
   return `<table class="logtable"><thead><tr>
-      <th>Game</th><th>Car</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs</th>
+      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs</th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 
@@ -323,7 +328,7 @@ function block(team, side, label) {
   const head = `<tr><th class="side">${label}</th>` +
     COLS.map(c=>`<th data-def="${c.k}" tabindex="0">${c.label}</th>`).join("") + "</tr>";
   const vals = `<tr class="vals ${side==="offense"?"off":"def"}">
-      <td class="side"><span><img src="${LOGOS[team]}" alt="">${team}</span></td>` +
+      <td class="side"><span><img src="${LOGOS[team]}" alt="">${abbr(team)}</span></td>` +
     COLS.map(c=>`<td><span>${fmt(row[c.k], c.dp)}</span></td>`).join("") + "</tr>";
   const rks = `<tr class="rks"><td class="side"><span>Rank</span></td>` +
     COLS.map(c=>{
@@ -347,7 +352,7 @@ function edges(offT, defT) {
     const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
     const side = (team, tag, rank, win, col) =>
       `<span class="side ${tag==="off"?"o":"d"}${win?" win":""}">
-         <b class="tm" style="color:${col}">${team}</b><span class="sd">${tag}</span>
+         <b class="tm" style="color:${col}">${abbr(team)}</b><span class="sd">${tag}</span>
          <span class="rk">#${rank}</span></span>`;
     return `<div class="edgerow${even?" even":""}">
       <span class="es">${lab}</span>
@@ -516,7 +521,7 @@ function openList(slot, q){
   const hits = matches(q);
   box.innerHTML = hits.length
     ? hits.map((t,i)=>`<button type="button" class="opt" role="option" data-t="${t}"${i===0?' data-on="1"':''}>
-        <img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b><span class="ab">${t}</span></button>`).join("")
+        <img src="${LOGOS[t]}" alt=""><b style="color:${tc(t)}">${NAMES[t]}</b><span class="ab">${abbr(t)}</span></button>`).join("")
     : '<div class="nores">No team matches that.</div>';
   box.hidden = false;
   document.getElementById("team"+slot).setAttribute("aria-expanded","true");

@@ -647,6 +647,20 @@ table.model th{color:var(--ink);font-weight:700}
   border-color:var(--line-strong);padding:3px 7px}
 </style>
 <style>
+/* the divider doubles as the swap control */
+.vs{appearance:none;border:1px solid transparent;background:none;cursor:pointer;
+  font-family:"Archivo",system-ui,sans-serif;font-weight:700;font-size:13px;letter-spacing:.12em;
+  color:var(--faint);padding:8px 11px;border-radius:3px;align-self:end;margin-bottom:5px;
+  transition:color .12s ease,border-color .12s ease,background .12s ease}
+.vs:hover{color:var(--ink);border-color:var(--grid);background:var(--sunk)}
+.vs:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.vs::after{content:"\\21C4";display:block;font-size:13px;line-height:1;margin-top:3px;opacity:0;
+  transition:opacity .12s ease}
+.vs:hover::after,.vs:focus-visible::after{opacity:1}
+@media (prefers-reduced-motion:reduce){.vs,.vs::after{transition:none}}
+@media (max-width:720px){.vs{display:block;align-self:center;margin:0 auto}}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -686,7 +700,8 @@ table.model th{color:var(--ink);font-weight:700}
       role="combobox" aria-expanded="false" aria-controls="listA" placeholder="Type a team..."></div>
     <div class="combo" id="listA" role="listbox" hidden></div>
   </div>
-  <div class="vs">VS</div>
+  <button class="vs" id="swap" type="button" title="Swap offense and defense"
+    aria-label="Swap offense and defense">VS</button>
   <div class="pick b" id="pickB">
     <label for="teamB">Rushing Defense</label>
     <div class="field"><img id="logoB" alt=""><input id="teamB" type="text" autocomplete="off"
@@ -718,7 +733,7 @@ table.model th{color:var(--ink);font-weight:700}
       attempts and games carry no rank, same as the sheet.</li>
     <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
-    <li><b>The last ten games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
+    <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
       which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
     <li><b>Every figure in the tables is raw</b> — what the team actually did. The <b>Grade</b> is
       the exception: its inputs are first adjusted for the defenses or offenses that team faced,
@@ -1394,6 +1409,10 @@ function wirePicker(slot){
 (function init(){
   paint("A"); paint("B");
   wirePicker("A"); wirePicker("B");
+  document.getElementById("swap").addEventListener("click", ()=>{
+    [SEL.A, SEL.B] = [SEL.B, SEL.A];
+    paint("A"); paint("B"); render();
+  });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
     paint("A"); paint("B"); render(); renderRankings(); });
   // NFL Week 1 opens the Thursday after Labor Day (the first Monday of September),

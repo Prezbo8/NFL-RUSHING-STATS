@@ -29,7 +29,8 @@
       role="combobox" aria-expanded="false" aria-controls="listA" placeholder="Type a team..."></div>
     <div class="combo" id="listA" role="listbox" hidden></div>
   </div>
-  <div class="vs">VS</div>
+  <button class="vs" id="swap" type="button" title="Swap offense and defense"
+    aria-label="Swap offense and defense">VS</button>
   <div class="pick b" id="pickB">
     <label for="teamB">Rushing Defense</label>
     <div class="field"><img id="logoB" alt=""><input id="teamB" type="text" autocomplete="off"
@@ -61,7 +62,7 @@
       attempts and games carry no rank, same as the sheet.</li>
     <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
-    <li><b>The last ten games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
+    <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
       which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
     <li><b>Every figure in the tables is raw</b> — what the team actually did. The <b>Grade</b> is
       the exception: its inputs are first adjusted for the defenses or offenses that team faced,
@@ -689,6 +690,10 @@ function wirePicker(slot){
 (function init(){
   paint("A"); paint("B");
   wirePicker("A"); wirePicker("B");
+  document.getElementById("swap").addEventListener("click", ()=>{
+    [SEL.A, SEL.B] = [SEL.B, SEL.A];
+    paint("A"); paint("B"); render();
+  });
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{
     paint("A"); paint("B"); render(); renderRankings(); });
   // NFL Week 1 opens the Thursday after Labor Day (the first Monday of September),

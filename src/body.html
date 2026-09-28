@@ -218,9 +218,27 @@ function computeGrades() {
 }
 computeGrades();
 
+// Strength of schedule: the average raw grade of the opponents a team has
+// actually faced, on the side that was tested. An offense's number is the mean
+// raw defensive grade of the defenses it played. Shown for context -- the
+// adjusted grade already accounts for it, this makes it legible.
+(function computeSOS(){
+  const foes = {};
+  for (const g of GAMES) (foes[g.team] ??= []).push(g.opponent);
+  for (const t of TEAMS) {
+    const played = foes[t] || [];
+    for (const [side, foeSide] of [["offense","defense"],["defense","offense"]]) {
+      const gs = played.map(o=>DATA[o]?.[foeSide]?.grade_raw).filter(v=>v!=null);
+      DATA[t][side].sos = gs.length
+        ? Math.round(gs.reduce((a,b)=>a+b,0)/gs.length) : null;
+    }
+  }
+})();
+
 const COLS = [
   {k:"grade_raw",     label:"Raw<br>Grade",     dp:0, offHigh:true,  defHigh:true},
   {k:"grade",         label:"Adj<br>Grade",     dp:0, offHigh:true,  defHigh:true},
+  {k:"sos",           label:"SOS",              dp:0, neutral:true},
   {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
   {k:"yds_gm",        label:"Yds<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
   {k:"att_gm",        label:"Att<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
@@ -270,6 +288,7 @@ const DEFS = {
   exp_pct:["Explosive Run Rate","How often a run goes for 10+ yards."],
   succ_pct:["Success Rate","How often a run gains enough for the down and distance."],
   stf_pct:["Stuffed Run Rate","How often a run is stopped at or behind the line. Low is good for an offense, high for a defense."],
+  sos:["Strength of Schedule","The average raw grade of the opponents faced, on the side that was tested — for an offense, the defenses it has played. Higher means a harder slate. It is already inside the adjusted grade; this column just makes it visible."],
   grade_raw:["Raw Grade","The same 0-100 score, but off the raw stats with no correction for who the team played. Useful next to the adjusted grade: a big gap means the schedule has been doing a lot of the work."],
   grade:["Adjusted Grade","A 0-100 score from DVOA 25, success rate 17, EPA per attempt 13, yards before contact 13, yards per carry 10, stuff rate 9, yards per game 6, yards after contact 4 and explosive rate 3. Each input is adjusted for the defenses or offenses that team actually faced, so an easy schedule does not inflate it. The stats in the table itself are raw."],
   dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for who they played."],
@@ -509,6 +528,7 @@ const RANK_COLS = [
   {k:"games",    label:"GP",      dp:0, neutral:true},
   {k:"grade_raw",label:"Raw",     dp:0, offHigh:true,  defHigh:true},
   {k:"grade",    label:"Adj",     dp:0, offHigh:true,  defHigh:true},
+  {k:"sos",      label:"SOS",     dp:0, neutral:true},
   {k:"dvoa",     label:"DVOA",    dp:1, offHigh:true,  defHigh:false},
   {k:"succ_pct", label:"SUCC%",   dp:1, offHigh:true,  defHigh:false},
   {k:"epa_att",  label:"EPA/ATT", dp:3, offHigh:true,  defHigh:false},

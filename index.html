@@ -643,6 +643,18 @@ table.model th{border-bottom:1px solid var(--grid)}
 table.model th.side,table.model td.side{border-right:1px solid var(--grid)}
 </style>
 <style>
+/* column headings in both tables read as headings, not captions */
+table.model th{color:var(--ink);font-weight:700}
+.logtable th{color:var(--ink);font-weight:700}
+.bkhead em,.bkhead i{color:var(--ink);font-weight:700}
+.logtable th.bk s{color:var(--muted)}
+</style>
+<style>
+/* bold headings are wider than the 600-weight ones these tracks were sized for */
+.bkrow{grid-template-columns:120px 84px 68px 106px}
+.logtable th.bk,.logtable td.bk{width:398px}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}

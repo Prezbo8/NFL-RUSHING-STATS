@@ -578,3 +578,16 @@ tbody td.tm span,tbody td.num span{background:none}
 .logbox{border-color:var(--grid)}
 .loghead{border-bottom-color:var(--grid)}
 </style>
+<style>
+/* "Touchdowns" was wider than its track and spilled past the frame, because
+   min-width:0 lets a grid item overflow rather than push the column open */
+.bkrow{grid-template-columns:128px 66px 60px 92px}
+.logtable th.bk,.logtable td.bk{width:366px}
+.bkhead em,.bkhead i{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logtable th:nth-child(1){text-align:center}
+</style>
+<style>
+/* "Carries" needs ~58px of text plus its cell padding; 66px was short */
+.bkrow{grid-template-columns:122px 80px 64px 92px}
+.logtable th.bk,.logtable td.bk{width:378px}
+</style>

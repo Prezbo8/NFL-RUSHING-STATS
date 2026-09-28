@@ -123,7 +123,53 @@ const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
+// ---- Composite grade -------------------------------------------------
+// Each input is converted to its percentile within its own side of the ball,
+// direction-aware, then weighted. Percentiles rather than raw values because
+// DVOA, a rate and a yards-per-carry figure share no scale. Weights follow the
+// order these stats actually earn: opponent-adjusted first, then the one that
+// stabilises fastest, then mechanism. 100 = best in the league at everything.
+const GRADE_WEIGHTS = [
+  {k:"dvoa",     w:30, offHigh:true,  defHigh:false},
+  {k:"succ_pct", w:20, offHigh:true,  defHigh:false},
+  {k:"epa_att",  w:15, offHigh:true,  defHigh:false},
+  {k:"aybco",    w:15, offHigh:true,  defHigh:false},
+  {k:"stf_pct",  w:10, offHigh:false, defHigh:true},
+  {k:"exp_pct",  w:5,  offHigh:true,  defHigh:false},
+  {k:"ayaco",    w:5,  offHigh:true,  defHigh:false},
+];
+
+function computeGrades() {
+  for (const side of ["offense","defense"]) {
+    // percentile lookup per stat, built once
+    const pct = {};
+    for (const g of GRADE_WEIGHTS) {
+      const high = side === "offense" ? g.offHigh : g.defHigh;
+      const vals = TEAMS.map(t=>DATA[t][side][g.k]).filter(v=>v!=null)
+                        .sort((a,b)=> high ? a-b : b-a);   // worst -> best
+      pct[g.k] = {};
+      for (const t of TEAMS) {
+        const v = DATA[t][side][g.k];
+        if (v == null) continue;
+        const worse = vals.findIndex(x=>x===v);            // ties share a rank
+        pct[g.k][t] = vals.length > 1 ? worse/(vals.length-1)*100 : 50;
+      }
+    }
+    for (const t of TEAMS) {
+      let sum = 0, used = 0;
+      for (const g of GRADE_WEIGHTS) {
+        const p = pct[g.k][t];
+        if (p == null) continue;                            // e.g. aRYOE unpublished
+        sum += p * g.w; used += g.w;
+      }
+      DATA[t][side].grade = used ? Math.round(sum/used) : null;
+    }
+  }
+}
+computeGrades();
+
 const COLS = [
+  {k:"grade",         label:"Grade",            dp:0, offHigh:true,  defHigh:true},
   {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
   {k:"yds_gm",        label:"Yds<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
   {k:"att_gm",        label:"Att<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
@@ -173,6 +219,7 @@ const DEFS = {
   exp_pct:["Explosive Run Rate","How often a run goes for 10+ yards."],
   succ_pct:["Success Rate","How often a run gains enough for the down and distance."],
   stf_pct:["Stuffed Run Rate","How often a run is stopped at or behind the line. Low is good for an offense, high for a defense."],
+  grade:["Rushing Grade","A 0-100 score built from DVOA, success rate, EPA per attempt, yards before and after contact, stuff rate and explosive rate — each as its league percentile, weighted in that order. 100 would be best in the league at all of them."],
   dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for who they played."],
   epa_att:["EPA per Attempt","Points added per carry, counting the situation it happened in."],
   ply_gm:["Plays per Game","Total offensive plays per game, run and pass."],
@@ -415,6 +462,7 @@ function render() {
 
 const RANK_COLS = [
   {k:"games",    label:"GP",      dp:0, neutral:true},
+  {k:"grade",    label:"Grade",   dp:0, offHigh:true,  defHigh:true},
   {k:"dvoa",     label:"DVOA",    dp:1, offHigh:true,  defHigh:false},
   {k:"succ_pct", label:"SUCC%",   dp:1, offHigh:true,  defHigh:false},
   {k:"epa_att",  label:"EPA/ATT", dp:3, offHigh:true,  defHigh:false},
@@ -429,7 +477,7 @@ const RANK_COLS = [
   {k:"ply_gm",   label:"PLY/GM",  dp:1, neutral:true},
 ];
 
-let rkSide = "offense", rkKey = "dvoa", rkBest = true;
+let rkSide = "offense", rkKey = "grade", rkBest = true;
 
 // league rank of a value within its column, direction-aware. 1 = best.
 function rankOf(col, side, team) {

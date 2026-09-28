@@ -61,9 +61,6 @@
       attempts and games carry no rank, same as the sheet.</li>
     <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
-    <li><b>Edges</b> compare the offense's league rank against the rank of the defense facing it. Both
-      are 1 = best within their own side, so the smaller number wins. Fewer than three ranks apart
-      reads as even.</li>
     <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
       which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
     <li><code>aYBCO + aYACO</code> does <b>not</b> equal <code>YPC</code> here — FTN's contact splits and
@@ -413,32 +410,6 @@ function block(team, side, label) {
   return head + vals + rks;
 }
 
-// One row per core stat, as a straight rank comparison in a proper table so the
-// two sides sit in fixed columns. Both ranks are 1 = best within their own side,
-// so the smaller number wins and the difference is the edge.
-function edges(offT, defT) {
-  const rows = ["dvoa","succ_pct","aybco","ayaco","stf_pct","exp_pct"].map(k=>{
-    const o = RANK.offense[k][offT], d = RANK.defense[k][defT];
-    if (!o || !d) return "";
-    const diff = d.rank - o.rank;
-    const even = Math.abs(diff) < 3;
-    const offWin = diff > 0;
-    const lab = COLS.find(c=>c.k===k).label.replace(/<br>\//g,"/").replace(/<br>/g," ");
-    const cls = w => even ? "" : (w ? " win" : " lose");
-    return `<tr>
-      <td class="est">${lab}</td>
-      <td class="erk${cls(offWin)}" style="${!even && offWin ? "color:var(--tOff)" : ""}">#${o.rank}</td>
-      <td class="erk${cls(!offWin)}" style="${!even && !offWin ? "color:var(--tDef)" : ""}">#${d.rank}</td>
-      <td class="edf">${even ? "even" : `${Math.abs(diff)}`}</td></tr>`;
-  }).join("");
-  return `<table class="edgetable"><thead><tr>
-      <th class="est">Edge</th>
-      <th><span style="color:var(--tOff)">${abbr(offT)}</span> Offense</th>
-      <th><span style="color:var(--tDef)">${abbr(defT)}</span> Defense</th>
-      <th class="edf">Gap</th>
-    </tr></thead><tbody>${rows}</tbody></table>`;
-}
-
 function panel(offT, defT) {
   let core = 0, n = 0;
   for (const k of ["dvoa","succ_pct","epa_att"]) {
@@ -462,7 +433,6 @@ function panel(offT, defT) {
         ${block(defT,"defense","Defense")}
       </table></div>
       <div class="panelfoot">
-        <div class="edges">${edges(offT,defT)}</div>
         <img class="ghost" src="${LOGOS[defT]}" alt="" aria-hidden="true">
       </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game

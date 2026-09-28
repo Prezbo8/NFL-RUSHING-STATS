@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 import ftn_tables
+import nfl_game_logs
 
 API = "https://6u5we6fbxi.execute-api.us-east-1.amazonaws.com/Statshub/statshub"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -149,10 +150,12 @@ def normalize(rows):
     return [{k: r.get(k) for k in sorted(keys)} for r in rows]
 
 
-def push(url, key, rows):
+def push(url, key, rows, table=TABLE, on_conflict="season,scraped_on,side,team"):
+    if not rows:
+        return
     r = requests.post(
-        f"{url}/rest/v1/{TABLE}",
-        params={"on_conflict": "season,scraped_on,side,team"},
+        f"{url}/rest/v1/{table}",
+        params={"on_conflict": on_conflict},
         headers={
             "apikey": key,
             "Authorization": f"Bearer {key}",
@@ -161,7 +164,7 @@ def push(url, key, rows):
         },
         data=json.dumps(rows), timeout=60)
     if r.status_code >= 300:
-        raise RuntimeError(f"supabase write failed {r.status_code}: {r.text[:400]}")
+        raise RuntimeError(f"supabase write to {table} failed {r.status_code}: {r.text[:400]}")
 
 
 def main():
@@ -180,6 +183,13 @@ def main():
     url, key = supabase_creds()
     push(url, key, normalize(off + dfn))
     print(f"wrote 64 rows to {TABLE} for {scraped}")
+
+    # per-game logs come from nflverse, which carries the opponent on every row
+    games, players = nfl_game_logs.build(SEASON)
+    push(url, key, games, "nfl_game_logs", "season,week,team")
+    push(url, key, players, "nfl_rb_game_logs", "season,week,team,player")
+    weeks = sorted({g["week"] for g in games})
+    print(f"wrote {len(games)} team-games and {len(players)} player-games, weeks {weeks[0]}-{weeks[-1]}")
 
 
 if __name__ == "__main__":

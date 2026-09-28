@@ -55,6 +55,13 @@ const META={json.dumps(meta,separators=(',',':'))};
 const SUPABASE_URL="https://mfliuasrygxkembqmrkr.supabase.co";
 const SUPABASE_ANON="{anon}";   // anon key: read-only, enforced by row-level security
 
+async function sb(path){{
+  const r=await fetch(`${{SUPABASE_URL}}/rest/v1/${{path}}`,
+    {{headers:{{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}}}});
+  if(!r.ok) throw new Error("Supabase returned "+r.status+" for "+path.split("?")[0]);
+  return r.json();
+}}
+
 async function loadData(){{
   const r=await fetch(`${{SUPABASE_URL}}/rest/v1/nfl_rushing_latest?select={COLS}`,
     {{headers:{{apikey:SUPABASE_ANON,Authorization:"Bearer "+SUPABASE_ANON}}}});
@@ -69,8 +76,16 @@ async function loadData(){{
 }}
 
 (async function boot(){{
-  let DATA;
-  try{{ DATA=await loadData(); }}
+  let DATA, GAMES=[], RBS=[];
+  try{{
+    DATA=await loadData();
+    // game logs are a nice-to-have: a failure here must not blank the page
+    try{{
+      [GAMES,RBS]=await Promise.all([
+        sb("nfl_game_logs?select=week,team,opponent,carries,rush_yards,rush_tds,ypc&order=week.desc"),
+        sb("nfl_rb_game_logs?select=week,team,opponent,player,position,carries,rush_yards,rush_tds")]);
+    }}catch(e){{ console.warn("game logs unavailable:",e.message); }}
+  }}
   catch(err){{
     document.getElementById("boot").innerHTML =
       `<b>Couldn't load the data.</b><span>${{err.message}}</span><br>`+

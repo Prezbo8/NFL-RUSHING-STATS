@@ -412,3 +412,30 @@ tbody td.tm span,tbody td.num span{background:none}
 @media (prefers-reduced-motion:reduce){.hstrip{transition:none!important;transform:none!important;
   flex-direction:column}.tickwrap{overflow:visible}.tickpanel{flex:none}}
 </style>
+<style>
+.logs{display:grid;grid-template-columns:1fr;gap:12px;margin-top:6px}
+.logbox{border:1px solid var(--line);background:var(--surface);border-radius:2px;overflow:hidden}
+.loghead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--sunk);
+  border-bottom:1px solid var(--line);font-family:"Archivo",system-ui,sans-serif;font-weight:700;
+  font-size:13.5px}
+.loghead img{width:20px;height:20px;object-fit:contain}
+.loghead s{text-decoration:none;margin-left:auto;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--faint);font-weight:600}
+.logtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.logtable th{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:10px;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--faint);text-align:right;
+  padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.logtable th:first-child,.logtable th.bk{text-align:left}
+.logtable td{padding:8px;font-size:13.5px;text-align:right;border-bottom:1px solid var(--line);
+  white-space:nowrap}
+.logtable tr:last-child td{border-bottom:0}
+.logtable td.wk{text-align:left;color:var(--faint);font-size:12px}
+.logtable td.wk b{color:var(--ink);font-family:"Archivo",system-ui,sans-serif;font-size:13px;
+  margin-right:6px}
+.logtable td.bk{text-align:left;white-space:normal;font-size:13px;color:var(--muted);
+  line-height:1.5;width:52%}
+.logtable td.bk em{font-style:normal;color:var(--ink);font-weight:600}
+.logtable td.big{font-weight:700}
+.logempty{padding:16px 12px;color:var(--faint);font-size:13px}
+@media (max-width:760px){.logtable td.bk,.logtable th.bk{display:none}}
+</style>

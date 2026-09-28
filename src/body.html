@@ -61,9 +61,11 @@
       attempts and games carry no rank, same as the sheet.</li>
     <li><b>Ranks know which way each stat runs.</b> For a defense, rank 1 is the fewest yards allowed
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
-    <li><b>The chips</b> under each block are percentile gaps between the offense and the defense facing
-      it, so a rushing offense's DVOA and a defense's DVOA allowed become comparable. Positive favors
-      the offense; under 8 points reads as even.</li>
+    <li><b>Edges</b> compare the offense's league rank against the rank of the defense facing it. Both
+      are 1 = best within their own side, so the smaller number wins. Fewer than three ranks apart
+      reads as even.</li>
+    <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
+      which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
     <li><code>aYBCO + aYACO</code> does <b>not</b> equal <code>YPC</code> here — FTN's contact splits and
       the statshub attempt counts cover different play universes, differing by about 0.9 yds/att.
       YPC is computed from attempts and yards.</li>
@@ -248,6 +250,49 @@ function buildTickers() {
   runTickers(TICK_STATS.length);
 }
 
+// Last five games. GAMES holds both sides of every game, so a defense's
+// "allowed" line is just the opponent's row for that week.
+function gameLog(team, allowed) {
+  const rows = GAMES.filter(g => (allowed ? g.opponent : g.team) === team)
+                    .sort((a,b)=> b.week - a.week).slice(0,5);
+  if (!rows.length) return `<div class="logempty">No games logged yet.</div>`;
+  const body = rows.map(g=>{
+    // backs are whoever carried it for the side that was running
+    const carrier = allowed ? g.team : g.team;
+    const backs = RBS.filter(p => p.week === g.week && p.team === carrier && p.carries > 0)
+                     .sort((a,b)=> b.rush_yards - a.rush_yards).slice(0,3)
+                     // full names: Atlanta carries both a Bijan and a Brian Robinson,
+                     // so neither surname alone nor a first initial separates them
+                     .map(p=>`<em>${p.player}</em> ${p.carries}-${p.rush_yards}-${p.rush_tds}`)
+                     .join(" · ") || "—";
+    const foe = allowed ? g.team : g.opponent;
+    return `<tr>
+      <td class="wk"><b>W${g.week}</b>${allowed ? "vs " : "@ "}${foe}</td>
+      <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
+      <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>
+      <td class="bk">${backs}</td></tr>`;
+  }).join("");
+  return `<table class="logtable"><thead><tr>
+      <th>Game</th><th>Car</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs</th>
+    </tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function renderLogs(offT, defT) {
+  const box = document.getElementById("logs");
+  if (!box) return;
+  box.innerHTML = `
+    <div class="logbox">
+      <div class="loghead"><img src="${LOGOS[offT]}" alt="">
+        <span style="color:${tc(offT)}">${NAMES[offT]}</span><s>Rushing</s></div>
+      ${gameLog(offT, false)}
+    </div>
+    <div class="logbox">
+      <div class="loghead"><img src="${LOGOS[defT]}" alt="">
+        <span style="color:${tc(defT)}">${NAMES[defT]}</span><s>Rushing allowed</s></div>
+      ${gameLog(defT, true)}
+    </div>`;
+}
+
 function wireTips(){
   let tip = document.getElementById("tip");
   if (!tip) { tip = document.createElement("div"); tip.id = "tip"; document.body.appendChild(tip); }
@@ -341,6 +386,7 @@ function panel(offT, defT) {
       </div>
       <p class="blocknote">Yards before contact and success rate both higher is what marks a run game
         that actually works — the rest is texture.</p>
+      <div class="logs" id="logs"></div>
     </div>
   </section>`;
 }
@@ -348,6 +394,7 @@ function panel(offT, defT) {
 function render() {
   const a = SEL.A, b = SEL.B;
   document.getElementById("panels").innerHTML = panel(a,b);
+  renderLogs(a,b);
 }
 
 const RANK_COLS = [

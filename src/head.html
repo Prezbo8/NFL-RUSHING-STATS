@@ -482,3 +482,9 @@ tbody td.tm span,tbody td.num span{background:none}
 .bkrow em,.bkrow i{line-height:1.15}
 .logtable td.bk{padding-top:8px;padding-bottom:8px}
 </style>
+<style>
+/* the name column was 1fr, so it absorbed every spare pixel and pushed the
+   numbers to the far right; fix its width and let the slack fall after */
+.bkrow{grid-template-columns:150px 54px 46px 80px;gap:8px;justify-content:start}
+.bkhead{width:auto}
+</style>

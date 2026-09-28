@@ -63,6 +63,10 @@
       and the lowest DVOA — but the <em>highest</em> stuff rate, since forcing stuffs is the good outcome.</li>
     <li><b>Last five games</b> come from nflverse rather than FTN — its weekly rows carry the opponent,
       which gives both the game log and the rushing-allowed side. Backs are listed carries-yards-TDs.</li>
+    <li><b>Every figure in the tables is raw</b> — what the team actually did. The <b>Grade</b> is
+      the exception: its inputs are first adjusted for the defenses or offenses that team faced,
+      because at this point in the season schedules are wildly uneven. Baltimore has played the
+      30th, 32nd and 26th ranked run defenses; Green Bay has played the 3rd, 1st and 6th.</li>
     <li><code>aYBCO + aYACO</code> does <b>not</b> equal <code>YPC</code> here — FTN's contact splits and
       the statshub attempt counts cover different play universes, differing by about 0.9 yds/att.
       YPC is computed from attempts and yards.</li>
@@ -136,27 +140,72 @@ const GRADE_WEIGHTS = [
   {k:"ayaco",    w:5,  offHigh:true,  defHigh:false},
 ];
 
+// Opponent adjustment. Only DVOA accounts for schedule on its own, so the other
+// six inputs are corrected here: subtract how far a team's opponents sit from
+// league average on the mirror stat. Gaining 5.25 against defenses that allow
+// 5.0 is not the same as gaining 5.25 against defenses that allow 3.8.
+//
+// A team's own games are inside its opponents' averages, which damps the
+// correction, so the pass is iterated three times -- each round the opponent
+// baselines are rebuilt from adjusted values rather than raw ones.
+function adjustForSchedule() {
+  const foes = {};
+  for (const g of GAMES) (foes[g.team] ??= []).push(g.opponent);
+  const enough = TEAMS.filter(t => (foes[t] || []).length);
+  const out = {offense:{}, defense:{}};
+  if (!enough.length) return null;                      // no game logs: fall back to raw
+
+  for (const {k} of GRADE_WEIGHTS) {
+    const raw = {offense:{}, defense:{}};
+    for (const side of ["offense","defense"])
+      for (const t of TEAMS) raw[side][t] = DATA[t][side][k];
+    const mean = side => {
+      const v = TEAMS.map(t=>raw[side][t]).filter(x=>x!=null);
+      return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+    };
+    const mOff = mean("offense"), mDef = mean("defense");
+    if (mOff == null || mDef == null) continue;
+
+    let adj = {offense:{...raw.offense}, defense:{...raw.defense}};
+    for (let pass = 0; pass < 3; pass++) {
+      const next = {offense:{}, defense:{}};
+      for (const t of TEAMS) {
+        const os = (foes[t] || []).map(o=>adj.defense[o]).filter(x=>x!=null);
+        const ds = (foes[t] || []).map(o=>adj.offense[o]).filter(x=>x!=null);
+        next.offense[t] = raw.offense[t] == null || !os.length ? raw.offense[t]
+          : raw.offense[t] - (os.reduce((a,b)=>a+b,0)/os.length - mDef);
+        next.defense[t] = raw.defense[t] == null || !ds.length ? raw.defense[t]
+          : raw.defense[t] - (ds.reduce((a,b)=>a+b,0)/ds.length - mOff);
+      }
+      adj = next;
+    }
+    out.offense[k] = adj.offense;
+    out.defense[k] = adj.defense;
+  }
+  return out;
+}
+
 function computeGrades() {
+  const adj = adjustForSchedule();
   for (const side of ["offense","defense"]) {
-    // percentile lookup per stat, built once
     const pct = {};
     for (const g of GRADE_WEIGHTS) {
       const high = side === "offense" ? g.offHigh : g.defHigh;
-      const vals = TEAMS.map(t=>DATA[t][side][g.k]).filter(v=>v!=null)
-                        .sort((a,b)=> high ? a-b : b-a);   // worst -> best
+      // grade off the adjusted value where we have one; the tables still show raw
+      const val = t => adj?.[side]?.[g.k]?.[t] ?? DATA[t][side][g.k];
+      const vals = TEAMS.map(val).filter(v=>v!=null).sort((a,b)=> high ? a-b : b-a);
       pct[g.k] = {};
       for (const t of TEAMS) {
-        const v = DATA[t][side][g.k];
+        const v = val(t);
         if (v == null) continue;
-        const worse = vals.findIndex(x=>x===v);            // ties share a rank
-        pct[g.k][t] = vals.length > 1 ? worse/(vals.length-1)*100 : 50;
+        pct[g.k][t] = vals.length > 1 ? vals.indexOf(v)/(vals.length-1)*100 : 50;
       }
     }
     for (const t of TEAMS) {
       let sum = 0, used = 0;
       for (const g of GRADE_WEIGHTS) {
         const p = pct[g.k][t];
-        if (p == null) continue;                            // e.g. aRYOE unpublished
+        if (p == null) continue;
         sum += p * g.w; used += g.w;
       }
       DATA[t][side].grade = used ? Math.round(sum/used) : null;
@@ -216,7 +265,7 @@ const DEFS = {
   exp_pct:["Explosive Run Rate","How often a run goes for 10+ yards."],
   succ_pct:["Success Rate","How often a run gains enough for the down and distance."],
   stf_pct:["Stuffed Run Rate","How often a run is stopped at or behind the line. Low is good for an offense, high for a defense."],
-  grade:["Rushing Grade","A 0-100 score built from DVOA, success rate, EPA per attempt, yards before and after contact, stuff rate and explosive rate — each as its league percentile, weighted in that order. 100 would be best in the league at all of them."],
+  grade:["Rushing Grade","A 0-100 score from DVOA, success rate, EPA per attempt, yards before and after contact, stuff rate and explosive rate, weighted in that order. Each input is adjusted for the defenses or offenses that team actually faced, so an easy schedule does not inflate it. The stats in the table itself are raw."],
   dvoa:["Rushing DVOA","Efficiency versus league average, adjusted for who they played."],
   epa_att:["EPA per Attempt","Points added per carry, counting the situation it happened in."],
   ply_gm:["Plays per Game","Total offensive plays per game, run and pass."],

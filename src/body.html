@@ -263,14 +263,22 @@ function gameLog(team, allowed) {
   const body = rows.map(g=>{
     // backs are whoever carried it for the side that was running
     const carrier = allowed ? g.team : g.team;
-    const backs = RBS.filter(p => p.week === g.week && p.team === carrier && p.carries > 0)
-                     .sort((a,b)=> b.rush_yards - a.rush_yards).slice(0,3)
-                     // full names: Atlanta carries both a Bijan and a Brian Robinson,
-                     // so neither surname alone nor a first initial separates them
-                     .map(p=>`<span class="bkrow"><em>${p.player}</em>
-                        <i>${p.carries}</i><i class="y">${p.rush_yards}</i>
-                        <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
-                     .join("") || '<span class="bkrow">—</span>';
+    const picked = RBS.filter(p => p.week === g.week && p.team === carrier && p.carries > 0)
+                      .sort((a,b)=> b.rush_yards - a.rush_yards).slice(0,3);
+    // D.Henry reads better than the full name, but Atlanta fields both a Bijan
+    // and a Brian Robinson, so fall back to first names when a game has a clash
+    const shortName = p => {
+      const bits = p.player.split(" ");
+      return bits.length > 1 ? `${bits[0][0]}.${bits.slice(1).join(" ")}` : p.player;
+    };
+    const counts = {};
+    for (const p of picked) counts[shortName(p)] = (counts[shortName(p)] || 0) + 1;
+    const label = p => counts[shortName(p)] > 1 ? p.player : shortName(p);
+
+    const backs = picked.map(p=>`<span class="bkrow"><em>${label(p)}</em>
+        <i>${p.carries}</i><i class="y">${p.rush_yards}</i>
+        <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
+      .join("") || '<span class="bkrow"><em>—</em></span>';
     const foe = allowed ? g.team : g.opponent;
     return `<tr>
       <td class="wk"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
@@ -280,7 +288,8 @@ function gameLog(team, allowed) {
       <td class="bk"><span class="bklist">${backs}</span></td></tr>`;
   }).join("");
   return `<table class="logtable"><thead><tr>
-      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs <s>car &middot; yds &middot; td</s></th>
+      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk"><span class="bkrow bkhead"><em>Backs</em>
+        <i>Carries</i><i>Yards</i><i>Touchdowns</i></span></th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 
@@ -290,12 +299,12 @@ function renderLogs(offT, defT) {
   box.innerHTML = `
     <div class="logbox">
       <div class="loghead"><img src="${LOGOS[offT]}" alt="">
-        <span style="color:${tc(offT)}">${NAMES[offT]}</span><s>Rushing</s></div>
+        <span style="color:${tc(offT)}">${NAMES[offT]}</span><s>&mdash; Offense</s></div>
       ${gameLog(offT, false)}
     </div>
     <div class="logbox">
       <div class="loghead"><img src="${LOGOS[defT]}" alt="">
-        <span style="color:${tc(defT)}">${NAMES[defT]}</span><s>Rushing allowed</s></div>
+        <span style="color:${tc(defT)}">${NAMES[defT]}</span><s>&mdash; Defense</s></div>
       ${gameLog(defT, true)}
     </div>`;
 }

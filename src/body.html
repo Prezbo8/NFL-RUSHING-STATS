@@ -83,7 +83,7 @@ const NAMES = Object.fromEntries(Object.entries(DATA).map(([k,v])=>[k, v.city+" 
 const TEAMS = Object.keys(DATA).sort((x,y)=>NAMES[x].localeCompare(NAMES[y]));
 // FTN codes Cleveland as CLV; show the conventional CLE without touching the
 // key the data is stored under
-const SHOW_ABBR = {CLV:"CLE"};
+const SHOW_ABBR = {CLV:"CLE", BLT:"BAL", HST:"HOU", ARZ:"ARI"};
 const abbr = t => SHOW_ABBR[t] || t;
 
 for (const t of TEAMS) for (const side of ["offense","defense"]) {
@@ -267,18 +267,20 @@ function gameLog(team, allowed) {
                      .sort((a,b)=> b.rush_yards - a.rush_yards).slice(0,3)
                      // full names: Atlanta carries both a Bijan and a Brian Robinson,
                      // so neither surname alone nor a first initial separates them
-                     .map(p=>`<em>${p.player}</em> ${p.carries}-${p.rush_yards}-${p.rush_tds}`)
-                     .join(" · ") || "—";
+                     .map(p=>`<span class="bkrow"><em>${p.player}</em>
+                        <i>${p.carries}</i><i class="y">${p.rush_yards}</i>
+                        <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
+                     .join("") || '<span class="bkrow">—</span>';
     const foe = allowed ? g.team : g.opponent;
     return `<tr>
       <td class="wk"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
         <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u></td>
       <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
       <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>
-      <td class="bk">${backs}</td></tr>`;
+      <td class="bk"><span class="bklist">${backs}</span></td></tr>`;
   }).join("");
   return `<table class="logtable"><thead><tr>
-      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs</th>
+      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs <s>car &middot; yds &middot; td</s></th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 

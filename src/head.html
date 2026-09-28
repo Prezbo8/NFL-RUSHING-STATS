@@ -443,3 +443,27 @@ tbody td.tm span,tbody td.num span{background:none}
 .logempty{padding:16px 12px;color:var(--faint);font-size:13px}
 @media (max-width:760px){.logtable td.bk,.logtable th.bk{display:none}}
 </style>
+<style>
+.logtable th.bk s{text-decoration:none;font-weight:500;letter-spacing:.04em;color:var(--line-strong);
+  margin-left:7px;text-transform:none;font-size:10px}
+.bklist{display:flex;flex-direction:column;gap:4px}
+.bkrow{display:grid;grid-template-columns:minmax(0,1fr) 30px 40px 26px;gap:9px;align-items:baseline}
+.bkrow em{font-style:normal;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.bkrow i{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--faint);
+  font-size:12.5px}
+.bkrow i.y{color:var(--ink);font-weight:600;font-size:13px}
+.bkrow i.t{color:var(--t1-fg,#FF8A4C);font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#FF9A5C}}
+:root[data-theme="dark"] .bkrow i.t{color:#FF9A5C}
+:root:not([data-theme="dark"]) .bkrow i.t{color:#C2561F}
+</style>
+<style>
+/* align every cell to the top so the game's totals sit level with the leading
+   back instead of floating in the middle of a three-row stack */
+.logtable td{vertical-align:top;padding-top:10px;padding-bottom:10px}
+.logtable td.wk,.logtable td.big,.logtable td:not(.bk){line-height:1.35}
+.bklist{gap:3px}
+.bkrow{line-height:1.35}
+</style>
+<style>.logtable td.bk{padding-top:9px}.bkrow{align-items:center}</style>

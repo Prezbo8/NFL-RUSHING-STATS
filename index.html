@@ -451,6 +451,30 @@ tbody td.tm span,tbody td.num span{background:none}
 @media (max-width:760px){.logtable td.bk,.logtable th.bk{display:none}}
 </style>
 <style>
+.logtable th.bk s{text-decoration:none;font-weight:500;letter-spacing:.04em;color:var(--line-strong);
+  margin-left:7px;text-transform:none;font-size:10px}
+.bklist{display:flex;flex-direction:column;gap:4px}
+.bkrow{display:grid;grid-template-columns:minmax(0,1fr) 30px 40px 26px;gap:9px;align-items:baseline}
+.bkrow em{font-style:normal;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.bkrow i{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--faint);
+  font-size:12.5px}
+.bkrow i.y{color:var(--ink);font-weight:600;font-size:13px}
+.bkrow i.t{color:var(--t1-fg,#FF8A4C);font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#FF9A5C}}
+:root[data-theme="dark"] .bkrow i.t{color:#FF9A5C}
+:root:not([data-theme="dark"]) .bkrow i.t{color:#C2561F}
+</style>
+<style>
+/* align every cell to the top so the game's totals sit level with the leading
+   back instead of floating in the middle of a three-row stack */
+.logtable td{vertical-align:top;padding-top:10px;padding-bottom:10px}
+.logtable td.wk,.logtable td.big,.logtable td:not(.bk){line-height:1.35}
+.bklist{gap:3px}
+.bkrow{line-height:1.35}
+</style>
+<style>.logtable td.bk{padding-top:9px}.bkrow{align-items:center}</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -592,7 +616,7 @@ const NAMES = Object.fromEntries(Object.entries(DATA).map(([k,v])=>[k, META[k].c
 const TEAMS = Object.keys(DATA).sort((x,y)=>NAMES[x].localeCompare(NAMES[y]));
 // FTN codes Cleveland as CLV; show the conventional CLE without touching the
 // key the data is stored under
-const SHOW_ABBR = {CLV:"CLE"};
+const SHOW_ABBR = {CLV:"CLE", BLT:"BAL", HST:"HOU", ARZ:"ARI"};
 const abbr = t => SHOW_ABBR[t] || t;
 
 for (const t of TEAMS) for (const side of ["offense","defense"]) {
@@ -776,18 +800,20 @@ function gameLog(team, allowed) {
                      .sort((a,b)=> b.rush_yards - a.rush_yards).slice(0,3)
                      // full names: Atlanta carries both a Bijan and a Brian Robinson,
                      // so neither surname alone nor a first initial separates them
-                     .map(p=>`<em>${p.player}</em> ${p.carries}-${p.rush_yards}-${p.rush_tds}`)
-                     .join(" · ") || "—";
+                     .map(p=>`<span class="bkrow"><em>${p.player}</em>
+                        <i>${p.carries}</i><i class="y">${p.rush_yards}</i>
+                        <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
+                     .join("") || '<span class="bkrow">—</span>';
     const foe = allowed ? g.team : g.opponent;
     return `<tr>
       <td class="wk"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
         <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u></td>
       <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
       <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>
-      <td class="bk">${backs}</td></tr>`;
+      <td class="bk"><span class="bklist">${backs}</span></td></tr>`;
   }).join("");
   return `<table class="logtable"><thead><tr>
-      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs</th>
+      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk">Backs <s>car &middot; yds &middot; td</s></th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 

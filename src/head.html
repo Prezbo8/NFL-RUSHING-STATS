@@ -145,7 +145,7 @@ thead th.tm,tbody td.tm{text-align:left}
 thead th.num,tbody td.num{text-align:center;width:34px}
 tbody td{padding:0;border-bottom:1px solid var(--line);font-weight:700;font-family:"Public Sans",system-ui,-apple-system,sans-serif;
   font-size:16px;text-align:right;white-space:nowrap}
-tbody td span{display:block;padding:9px 11px}
+#ranktable tbody td span{display:block;padding:9px 11px}
 tbody tr:last-child td{border-bottom:0}
 tbody td.tm span{font-family:"Public Sans",system-ui,-apple-system,sans-serif;font-size:14px;font-weight:500;padding-right:16px}
 tbody td.num span{color:var(--faint);font-size:13px;font-weight:700}
@@ -501,4 +501,35 @@ tbody td.tm span,tbody td.num span{background:none}
 .logtable td{padding-top:6px;padding-bottom:7px}
 .logtable td.bk{padding-top:5px;padding-bottom:6px}
 .logtable td.wk u{font-size:14px}
+</style>
+<style>
+/* Backs filled only ~330px of a 556px cell, leaving a dead strip down the
+   right of every row. The three number columns now share the slack evenly,
+   so each header sits over its own column and the row runs edge to edge. */
+.bkrow{grid-template-columns:minmax(120px,1.35fr) 1fr 1fr 1.15fr;gap:8px;justify-content:stretch}
+.bkhead{width:100%}
+.logtable th.bk,.logtable td.bk{padding-right:12px}
+.logtable td:nth-child(5){padding-right:14px}
+</style>
+<style>
+/* fr tracks grow to min-content by default, so the wide word "Touchdowns"
+   sized the header row's columns differently from the data rows' */
+.bkrow > *{min-width:0}
+</style>
+<style>
+/* the data rows were sitting 11px inside the cell while the header spanned it;
+   pin both to the same box so every column lines up with its heading */
+.bklist{width:100%;box-sizing:border-box}
+.bkrow{width:100%;box-sizing:border-box;margin:0}
+</style>
+<style>
+/* rules between every column and every back */
+.logtable th,.logtable td{border-right:1px solid var(--line)}
+.logtable th:last-child,.logtable td:last-child{border-right:0}
+.bkrow{gap:0;border-bottom:1px solid var(--line)}
+.bklist .bkrow:last-child{border-bottom:0}
+.bkrow > *{border-right:1px solid var(--line);padding:2px 8px}
+.bkrow > *:last-child{border-right:0;padding-right:0}
+.bkrow > *:first-child{padding-left:0}
+.logtable td.bk,.logtable th.bk{padding-left:10px;padding-right:10px}
 </style>

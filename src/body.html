@@ -288,8 +288,8 @@ function gameLog(team, allowed) {
       <td class="bk"><span class="bklist">${backs}</span></td></tr>`;
   }).join("");
   return `<table class="logtable"><thead><tr>
-      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk"><span class="bkrow bkhead"><em>Backs</em>
-        <i>Carries</i><i>Yards</i><i>Touchdowns</i></span></th>
+      <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk"><span class="bklist"><span class="bkrow bkhead"><em>Backs</em>
+        <i>Carries</i><i>Yards</i><i>Touchdowns</i></span></span></th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 

@@ -30,3 +30,7 @@ create table if not exists nfl_rb_game_logs (
     primary key (season, week, team, player)
 );
 create index if not exists nfl_rb_logs_lookup on nfl_rb_game_logs (season, opponent, week desc);
+
+-- final scores, joined from nflverse's schedule file
+alter table nfl_game_logs add column if not exists points_for integer;
+alter table nfl_game_logs add column if not exists points_against integer;

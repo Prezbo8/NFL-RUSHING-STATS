@@ -327,9 +327,22 @@ function gameLog(team, allowed) {
         <i class="${p.rush_tds ? "t" : ""}">${p.rush_tds}</i></span>`)
       .join("") || '<span class="bkrow"><em>—</em></span>';
     const foe = allowed ? g.team : g.opponent;
+    // the opponent's rushing-offense grade rank, so "who did they face" is answered
+    const foeRank = RANK.offense.grade?.[foe]?.rank;
+    // rows in the "allowed" view belong to the opponent, so the score has to be
+    // read back from the box team's side or a loss would render as a win
+    const pf = allowed ? g.points_against : g.points_for;
+    const pa = allowed ? g.points_for : g.points_against;
+    const won = pf == null ? null : pf > pa ? "W" : pf < pa ? "L" : "T";
+    const score = pf == null ? "" :
+      `<span class="sc ${won === "W" ? "w" : won === "L" ? "l" : "t"}">${won}</span>
+       <span class="scv">${pf}\u2013${pa}</span>`;
     return `<tr>
-      <td class="wk"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
-        <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u></td>
+      <td class="wk">
+        <span class="gm"><b>W${g.week}</b><s>${allowed ? "vs" : "@"}</s>
+          <img src="${LOGOS[foe]}" alt=""><u style="color:${tc(foe)}">${META[foe].name}</u>
+          ${foeRank ? `<span class="rrk">#${foeRank} rush</span>` : ""}</span>
+        <span class="gs">${score}</span></td>
       <td>${g.carries}</td><td class="big">${g.rush_yards}</td><td>${g.rush_tds}</td>
       <td>${g.ypc == null ? "—" : Number(g.ypc).toFixed(2)}</td>
       <td class="bk"><span class="bklist">${backs}</span></td></tr>`;

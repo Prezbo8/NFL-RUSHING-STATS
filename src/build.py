@@ -82,7 +82,7 @@ async function loadData(){{
     // game logs are a nice-to-have: a failure here must not blank the page
     try{{
       [GAMES,RBS]=await Promise.all([
-        sb("nfl_game_logs?select=week,team,opponent,carries,rush_yards,rush_tds,ypc&order=week.desc"),
+        sb("nfl_game_logs?select=week,team,opponent,carries,rush_yards,rush_tds,ypc,points_for,points_against&order=week.desc"),
         sb("nfl_rb_game_logs?select=week,team,opponent,player,position,carries,rush_yards,rush_tds")]);
     }}catch(e){{ console.warn("game logs unavailable:",e.message); }}
   }}

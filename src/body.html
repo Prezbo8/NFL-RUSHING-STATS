@@ -12,6 +12,7 @@
     <span class="src" id="livedate"></span>
     <span class="src" id="liverun"></span>
   </div>
+  <button class="guidebtn" id="guideopen" type="button">Reading this page</button>
 </header>
 
 <div class="tabs" role="tablist">
@@ -19,9 +20,8 @@
   <button class="tab" id="tab-rankings" role="tab" aria-selected="false" aria-controls="view-rankings">Rankings</button>
 </div>
 
-<div class="tickers" id="tickers"></div>
-
 <div id="view-matchup" role="tabpanel" aria-labelledby="tab-matchup">
+<div class="tickers" id="tickers"></div>
 <div class="pickers">
   <div class="pick a" id="pickA">
     <label for="teamA">Rushing Offense</label>
@@ -54,7 +54,8 @@
   <div class="tablewrap"><table id="ranktable"><thead><tr id="rankhead"></tr></thead><tbody id="rankbody"></tbody></table></div>
 </div>
 
-<footer>
+<footer id="guide" hidden>
+  <button class="guideclose" id="guideclose" type="button" aria-label="Close">×</button>
   <h2>Reading this page</h2>
   <ul>
     <li><b>Each block reads like the RUNNING MODEL tab</b> — a stats row for the team with its
@@ -426,7 +427,7 @@ function gameLog(team, allowed) {
   }).join("");
   return `<table class="logtable"><thead><tr>
       <th>Opponent</th><th>Att</th><th>Yds</th><th>TD</th><th>YPC</th><th class="bk"><span class="bklist"><span class="bkrow bkhead"><em>Backs</em>
-        <i>Carries</i><i>Yards</i><i>Touchdowns</i></span></span></th>
+        <i>Att</i><i>Yds</i><i>TD</i></span></span></th>
     </tr></thead><tbody>${body}</tbody></table>`;
 }
 
@@ -437,12 +438,12 @@ function renderLogs(offT, defT) {
     <div class="logbox">
       <div class="loghead"><img src="${LOGOS[offT]}" alt="">
         <span style="color:${tc(offT)}">${NAMES[offT]}</span><s>&mdash; Offense</s></div>
-      ${gameLog(offT, false)}
+      <div class="logscroll">${gameLog(offT, false)}</div>
     </div>
     <div class="logbox">
       <div class="loghead"><img src="${LOGOS[defT]}" alt="">
         <span style="color:${tc(defT)}">${NAMES[defT]}</span><s>&mdash; Defense</s></div>
-      ${gameLog(defT, true)}
+      <div class="logscroll">${gameLog(defT, true)}</div>
     </div>`;
 }
 
@@ -737,5 +738,15 @@ function wirePicker(slot){
   wireTips();
   buildTickers();
   renderRankings();
+
+  // the notes used to sit at the bottom of the page and were the main reason
+  // it scrolled; they now open over the top of it
+  const guide = document.getElementById("guide");
+  const showGuide = on => { guide.hidden = !on;
+    document.getElementById("guideopen").setAttribute("aria-expanded", on ? "true" : "false"); };
+  document.getElementById("guideopen").onclick = () => showGuide(true);
+  document.getElementById("guideclose").onclick = () => showGuide(false);
+  guide.addEventListener("click", e => { if (e.target === guide) showGuide(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") showGuide(false); });
 })();
 </script>

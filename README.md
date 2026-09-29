@@ -87,10 +87,11 @@ security add-generic-password -s nfl-rushing-supabase-key -a "$USER" -w 'eyJ...'
 
 ## Schedule
 
-Runs on **GitHub Actions** — `.github/workflows/scrape.yml`, Sun/Tue/Wed at 22:00 UTC.
+Runs on **GitHub Actions** — `.github/workflows/scrape.yml`, Tue/Wed/Sat at 15:00 UTC,
+which is 11:00 ET during daylight saving and 10:00 ET after the November change.
 
-That lands at 18:00 EDT / 17:00 EST. GitHub cron has no DST handling, so 22:00 was chosen
-so the run never fires *before* 5pm New York in either half of the year.
+GitHub's scheduler runs late under load — past runs have started one to two hours
+behind the cron time — so treat it as "no earlier than" rather than exact.
 
 Credentials come from repo secrets `SUPABASE_URL` and `SUPABASE_KEY` (service-role). Secrets
 are not exposed to pull requests from forks, and the workflow only triggers on `schedule` and

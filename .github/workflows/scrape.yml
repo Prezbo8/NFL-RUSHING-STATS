@@ -2,10 +2,10 @@ name: Scrape FTN rushing stats
 
 on:
   schedule:
-    # 22:00 UTC on Sun/Tue/Wed = 18:00 EDT, 17:00 EST.
-    # GitHub cron has no DST handling; 22:00 keeps the run at or after 5pm
-    # New York year-round rather than drifting an hour early each winter.
-    - cron: "0 22 * * 0,2,3"
+    # 15:00 UTC on Tue/Wed/Sat = 11:00 ET while daylight saving is in effect.
+    # GitHub cron has no DST handling, so this becomes 10:00 ET after the
+    # November change; move to 16:00 then if 11:00 matters year-round.
+    - cron: "0 15 * * 2,3,6"
   workflow_dispatch:
 
 permissions:

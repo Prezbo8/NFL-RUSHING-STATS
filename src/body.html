@@ -239,7 +239,6 @@ computeGrades();
 const COLS = [
   {k:"grade_raw",     label:"Raw<br>Grade",     dp:0, offHigh:true,  defHigh:true},
   {k:"grade",         label:"Adj<br>Grade",     dp:0, offHigh:true,  defHigh:true},
-  {k:"sos",           label:"SOS",              dp:0, neutral:true},
   {k:"rushing_tds",   label:"SZN<br>TD",        dp:0, offHigh:true,  defHigh:false},
   {k:"yds_gm",        label:"Yds<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
   {k:"att_gm",        label:"Att<br>/Gm",       dp:1, offHigh:true,  defHigh:false},
@@ -255,6 +254,7 @@ const COLS = [
   // has played an extra game climbs here on volume alone.
   {k:"rushing_yards", label:"Tot<br>Yds",       dp:0, offHigh:true,  defHigh:false},
   {k:"attempts",      label:"Tot<br>Att",       dp:0, offHigh:true,  defHigh:false},
+  {k:"sos",           label:"SOS",              dp:0, neutral:true},
 ];
 
 const RANK = {};

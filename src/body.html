@@ -386,10 +386,10 @@ function tickerPanels(side, best) {
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
       const fill = tc2(o.t);                       // the team's real secondary
-      return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 2.6)};--tink:${inkOn(fill)}">
+      return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 3.4)};--tink:${inkOn(fill)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${onCard(COLORS[o.t], fill, 4)}">${META[o.t].name}</b>
+        <b style="color:${onCard(COLORS[o.t], fill, 5.6)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

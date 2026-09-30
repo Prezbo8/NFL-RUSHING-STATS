@@ -157,7 +157,7 @@ const cardFill = (hex, dark) => mix(hex, dark ? "#151D20" : "#FFFFFF", .12);
 // on the mid-dark fills: Bears navy on their orange card was being lightened
 // to periwinkle when darkening reaches the same contrast in a fraction of the
 // distance and stays recognisably navy. Fewest steps keeps the brand value.
-function onCard(hex, ground, target){
+function onCard(hex, ground, target, travel){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;
   // On a mid-toned card no color can reach a high target in either direction --
@@ -169,11 +169,10 @@ function onCard(hex, ground, target){
     let best = { out, n: 0, hit: contrast(out, ground) >= target, c: contrast(out, ground) };
     while (!best.hit) {
       const next = ll + dir;
-      // A color that travels far enough stops being the team's. Bears navy on
-      // their own orange card cannot reach 5.6:1 in either direction, and
-      // unbounded it walked all the way to near-white. Past this much travel,
-      // take the best contrast the hue can hold and let the target go.
-      if (next > 96 || next < 4 || Math.abs(next - l) > 46) return best;
+      // A color that travels far enough stops being the team's, so the walk is
+      // bounded -- but saturation is never touched, so a navy that has to go
+      // light arrives as a vivid periwinkle rather than washing out to white.
+      if (next > 96 || next < 4 || Math.abs(next - l) > travel) return best;
       ll = next; out = hslToHex(h, s, ll);
       best = { out, n: best.n + 1, hit: contrast(out, ground) >= target, c: contrast(out, ground) };
     }
@@ -191,15 +190,11 @@ function onCard(hex, ground, target){
 // actually wins against this card.
 const inkOn = ground =>
   contrast("#F2F6F7", ground) >= contrast("#12181A", ground) ? "#F2F6F7" : "#12181A";
-// Some pairs have no answer in the brand hue: Giants navy on their own red,
-// Bears navy on their orange. Neither direction reaches a readable contrast
-// without travelling so far the color stops being the team's. Where that
-// happens the name takes plain ink -- the border, logo and fill still say
-// whose card it is, and a legible name beats a navy no one can read.
-const nameOn = (hex, ground) => {
-  const brand = onCard(hex, ground, 5.6);
-  return contrast(brand, ground) >= 4.5 ? brand : inkOn(ground);
-};
+// Every name stays in the team's own color -- no ink fallback. The hard pairs
+// (Giants navy on their red, Bears navy on their orange) get a long leash
+// instead, and because saturation is held the far end of that leash is a
+// vivid light blue, not white.
+const nameOn = (hex, ground) => onCard(hex, ground, 5.6, 62);
 const CLIGHT = {}, CDARK = {};
 for (const t of Object.keys(COLORS)) {
   CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
@@ -413,7 +408,7 @@ function tickerPanels(side, best) {
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
       const fill = tc2(o.t);                       // the team's real secondary
-      return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 3.4)};--tink:${inkOn(fill)}">
+      return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 3.4, 46)};--tink:${inkOn(fill)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
         <b style="color:${nameOn(COLORS[o.t], fill)}">${META[o.t].name}</b>

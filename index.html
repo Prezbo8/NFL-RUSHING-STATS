@@ -835,6 +835,11 @@ table.model th{color:var(--ink);font-weight:700}
 :root:not([data-theme="dark"]) .tickitem img.tickghost{opacity:.92}
 </style>
 <style>
+/* Thicker edge -- the border carries the primary color, so it is worth more
+   than a hairline. */
+.tickitem{border-width:3px}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -1046,20 +1051,38 @@ const mix = (a, b, t) => {
 // one hole, without moving the color off the brand value
 const cardFill = (hex, dark) => mix(hex, dark ? "#151D20" : "#FFFFFF", .12);
 
-// Step away from the card until the text clears it. Direction comes from the
-// card's own luminance, not the theme -- green on a gold Packers card has to
-// get darker even when the page around it is dark.
+// Step away from the card until the text clears it. Try both directions and
+// take whichever gets there first -- a single luminance threshold picks badly
+// on the mid-dark fills: Bears navy on their orange card was being lightened
+// to periwinkle when darkening reaches the same contrast in a fraction of the
+// distance and stays recognisably navy. Fewest steps keeps the brand value.
 function onCard(hex, ground, target){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;
-  const up = relLum(ground) < .2;
-  let out = hslToHex(h, s, l);
-  for (let i = 0; i < 100 && contrast(out, ground) < target; i++) {
-    l += up ? 1 : -1;
-    if (l > 96 || l < 4) break;
-    out = hslToHex(h, s, l);
-  }
-  return out;
+  // On a mid-toned card no color can reach a high target in either direction --
+  // 5.6:1 against the Bears' orange needs a luminance above 1. So a walk that
+  // runs out of room reports the best it managed rather than giving up, or the
+  // color falls back to its raw value and lands worse than either direction.
+  const walk = dir => {
+    let ll = l, out = hslToHex(h, s, ll);
+    let best = { out, n: 0, hit: contrast(out, ground) >= target, c: contrast(out, ground) };
+    while (!best.hit) {
+      const next = ll + dir;
+      // A color that travels far enough stops being the team's. Bears navy on
+      // their own orange card cannot reach 5.6:1 in either direction, and
+      // unbounded it walked all the way to near-white. Past this much travel,
+      // take the best contrast the hue can hold and let the target go.
+      if (next > 96 || next < 4 || Math.abs(next - l) > 46) return best;
+      ll = next; out = hslToHex(h, s, ll);
+      best = { out, n: best.n + 1, hit: contrast(out, ground) >= target, c: contrast(out, ground) };
+    }
+    return best;
+  };
+  const up = walk(1), down = walk(-1);
+  if (up.hit && down.hit) return up.n <= down.n ? up.out : down.out;
+  if (up.hit)   return up.out;
+  if (down.hit) return down.out;
+  return up.c >= down.c ? up.out : down.out;
 }
 // A fixed luminance threshold picks badly on the mid-tone cards -- silver
 // (Cowboys, Colts, Raiders) and mid blue (Titans) sit right at the crossover,
@@ -1067,6 +1090,15 @@ function onCard(hex, ground, target){
 // actually wins against this card.
 const inkOn = ground =>
   contrast("#F2F6F7", ground) >= contrast("#12181A", ground) ? "#F2F6F7" : "#12181A";
+// Some pairs have no answer in the brand hue: Giants navy on their own red,
+// Bears navy on their orange. Neither direction reaches a readable contrast
+// without travelling so far the color stops being the team's. Where that
+// happens the name takes plain ink -- the border, logo and fill still say
+// whose card it is, and a legible name beats a navy no one can read.
+const nameOn = (hex, ground) => {
+  const brand = onCard(hex, ground, 5.6);
+  return contrast(brand, ground) >= 4.5 ? brand : inkOn(ground);
+};
 const CLIGHT = {}, CDARK = {};
 for (const t of Object.keys(COLORS)) {
   CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
@@ -1283,7 +1315,7 @@ function tickerPanels(side, best) {
       return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 3.4)};--tink:${inkOn(fill)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${onCard(COLORS[o.t], fill, 5.6)}">${META[o.t].name}</b>
+        <b style="color:${nameOn(COLORS[o.t], fill)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

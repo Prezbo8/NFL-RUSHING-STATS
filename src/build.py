@@ -9,6 +9,7 @@ sc = pathlib.Path(__file__).parent
 repo = sc.parent
 head=(sc/"head.html").read_text(); body=(sc/"body.html").read_text()
 logos=(sc/"logos_data.json").read_text(); nfl=(sc/"nfl_logo.json").read_text().strip(); colors=(sc/"colors.json").read_text().replace("\n","")
+colors2=(sc/"colors2.json").read_text().replace("\n","")
 # anon key is public by design (read-only under RLS); it already ships in index.html
 anon=re.search(r'SUPABASE_ANON="([^"]+)"', (repo/"index.html").read_text()).group(1)
 data=json.load(open(sc/"matchup_data.json"))
@@ -52,6 +53,7 @@ live = f"""<!doctype html>
 const LOGOS={logos};
 const NFL_LOGO={nfl};
 const COLORS={colors};
+const COLORS2={colors2};
 const META={json.dumps(meta,separators=(',',':'))};
 const SUPABASE_URL="https://mfliuasrygxkembqmrkr.supabase.co";
 const SUPABASE_ANON="{anon}";   // anon key: read-only, enforced by row-level security

@@ -681,3 +681,34 @@ table.model th{color:var(--ink);font-weight:700}
 .empty .elink:hover{color:var(--ink)}
 .empty .elink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 </style>
+<style>
+/* Each ticker row is its own card: a border in the team's secondary color,
+   with the logo ghosted behind the text. The logo bleeds off the right edge
+   so it reads as a watermark rather than a second icon competing with the
+   small one beside the team name. */
+.tickitem{position:relative;overflow:hidden;border:1px solid var(--tsec,var(--line));
+  border-radius:3px;margin:0 7px 5px;padding:6px 9px;background:var(--surface)}
+.tickitem::before{content:"";position:absolute;inset:0;background:var(--tsec);
+  opacity:.07;pointer-events:none}
+.tickghost{position:absolute;right:-12px;top:50%;transform:translateY(-50%);
+  width:44px;height:44px;object-fit:contain;opacity:.16;pointer-events:none;
+  user-select:none;z-index:0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickghost{opacity:.2}
+  :root:not([data-theme="light"]) .tickitem::before{opacity:.1}}
+:root[data-theme="dark"] .tickghost{opacity:.2}
+:root[data-theme="dark"] .tickitem::before{opacity:.1}
+/* keep the real content above both layers */
+.tickitem > img:not(.tickghost),.tickitem > b,.tickitem > .v{position:relative;z-index:1}
+/* the value sits clear of the watermark */
+.tickitem .v{padding-right:13px}
+.tickpanel{padding-bottom:2px}
+</style>
+<style>
+/* First pass put the watermark at .16 with 12px hanging off the edge, which
+   left the darker logos (Bears, Ravens, Chiefs) invisible on a dark ground
+   and the brighter ones reading as a sliver. Bigger, less bleed, stronger. */
+.tickghost{right:-5px;width:46px;height:46px;opacity:.26}
+.tickitem .v{padding-right:17px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickghost{opacity:.34}}
+:root[data-theme="dark"] .tickghost{opacity:.34}
+</style>

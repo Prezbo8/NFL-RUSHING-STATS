@@ -117,11 +117,15 @@ function teamColor(hex, dark){
 }
 const CLIGHT = {}, CDARK = {};
 for (const t of Object.keys(COLORS)) { CLIGHT[t] = teamColor(COLORS[t], false); CDARK[t] = teamColor(COLORS[t], true); }
+// secondary colors, run through the same legibility pass, for the ticker borders
+const C2LIGHT = {}, C2DARK = {};
+for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColor(COLORS2[t], false); C2DARK[t] = teamColor(COLORS2[t], true); }
 const isDark = () => {
   const ex = document.documentElement.getAttribute("data-theme");
   return ex ? ex === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
 };
 const tc = t => (isDark() ? CDARK : CLIGHT)[t];
+const tc2 = t => (isDark() ? C2DARK : C2LIGHT)[t];
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
@@ -321,7 +325,9 @@ function tickerPanels(side, best) {
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem"><img src="${LOGOS[o.t]}" alt="">
+      return `<span class="tickitem" style="--tsec:${tc2(o.t)}">
+        <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
+        <img src="${LOGOS[o.t]}" alt="">
         <b style="color:${tc(o.t)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");

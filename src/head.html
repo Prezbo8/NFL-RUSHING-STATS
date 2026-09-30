@@ -804,3 +804,17 @@ table.model th{color:var(--ink);font-weight:700}
 .tickitem span.v{color:var(--tink)}
 .tickitem span.v i{color:var(--tink);opacity:.6}
 </style>
+<style>
+/* The watermark was at .3 behind a luminosity blend, which on a card painted
+   the team's own color left almost nothing to see. Drop the blend and lift it
+   to a logo you can actually read, still clearly sitting behind the text. */
+.tickitem img.tickghost{opacity:.62;mix-blend-mode:normal}
+</style>
+<style>
+/* An earlier `:root[data-theme="dark"] .tickitem img.tickghost{opacity:.26}`
+   outranks a bare class selector, so the dark theme was still hiding the logo
+   while the light one had been lifted. Same value on both. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickitem img.tickghost{opacity:.62}}
+:root[data-theme="dark"] .tickitem img.tickghost{opacity:.62}
+:root:not([data-theme="dark"]) .tickitem img.tickghost{opacity:.62}
+</style>

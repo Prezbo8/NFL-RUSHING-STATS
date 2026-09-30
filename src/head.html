@@ -13,7 +13,7 @@
     --ground:#0D1315; --surface:#151D20; --sunk:#101719;
     --ink:#E8EDEE; --muted:#8FA0A6; --faint:#6A7C82;
     --line:#222E32; --line-strong:#33454A;
-    --a:#E07A3C; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
+    --a:#C48158; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
     --even:#6A7C82;
   }
 }
@@ -21,7 +21,7 @@
   --ground:#0D1315; --surface:#151D20; --sunk:#101719;
   --ink:#E8EDEE; --muted:#8FA0A6; --faint:#6A7C82;
   --line:#222E32; --line-strong:#33454A;
-  --a:#E07A3C; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
+  --a:#C48158; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
   --even:#6A7C82;
 }
 *{box-sizing:border-box}
@@ -306,7 +306,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
   font-weight:600;font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink)}
 .live .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex:none;
   box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:pulse 2.4s ease-out infinite}
-.live.stale .dot{background:#f59e0b;animation:none;box-shadow:none}
+.live.stale .dot{background:#BD9043;animation:none;box-shadow:none}
 .live .src{font-size:11.5px;letter-spacing:.04em;color:var(--faint);
   font-family:"Public Sans",system-ui,sans-serif;text-transform:none;font-weight:400}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}
@@ -369,12 +369,12 @@ tbody td.tm span,tbody td.num span{background:none}
   border-bottom:1px solid var(--line);background:var(--sunk)}
 .ticklabel s{display:block;text-decoration:none;font-size:12.5px;letter-spacing:.09em;
   color:var(--faint);margin-top:2px}
-.tick.hot .ticklabel{color:#C2561F}
+.tick.hot .ticklabel{color:#B65A2B}
 .tick.cold .ticklabel{color:#2F7FB3}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#FF8A4C}
-  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#5FB4E6}}
-:root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
-:root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#D0987B}
+  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#76AECF}}
+:root[data-theme="dark"] .tick.hot .ticklabel{color:#D0987B}
+:root[data-theme="dark"] .tick.cold .ticklabel{color:#76AECF}
 
 /* All five rows of a stat show at once; the motion is the strip sliding
    sideways to the next stat. Height follows the tallest panel. */
@@ -438,10 +438,10 @@ tbody td.tm span,tbody td.num span{background:none}
 .bkrow i{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--faint);
   font-size:12.5px}
 .bkrow i.y{color:var(--ink);font-weight:600;font-size:13px}
-.bkrow i.t{color:var(--t1-fg,#FF8A4C);font-weight:700}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#FF9A5C}}
-:root[data-theme="dark"] .bkrow i.t{color:#FF9A5C}
-:root:not([data-theme="dark"]) .bkrow i.t{color:#C2561F}
+.bkrow i.t{color:var(--t1-fg,#D0987B);font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#D5A486}}
+:root[data-theme="dark"] .bkrow i.t{color:#D5A486}
+:root:not([data-theme="dark"]) .bkrow i.t{color:#B65A2B}
 </style>
 <style>
 /* align every cell to the top so the game's totals sit level with the leading
@@ -761,4 +761,14 @@ table.model th{color:var(--ink);font-weight:700}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickitem img.tickghost{opacity:.26}}
 :root[data-theme="dark"] .tickitem img.tickghost{opacity:.26}
 .tickitem .v{padding-right:58px}
+</style>
+<style>
+/* The team colors are capped at 48% saturation now; these hardcoded accents
+   were still at 100% and stood out as the only glowing things left. */
+</style>
+<style>
+/* The name is the thing you read first in a ticker row; give it more size and
+   letterform weight than the figure beside it. */
+.tickitem b{font-size:17.5px;letter-spacing:-.005em}
+.tickitem span.v{font-weight:600}
 </style>

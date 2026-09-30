@@ -21,7 +21,7 @@
     --ground:#0D1315; --surface:#151D20; --sunk:#101719;
     --ink:#E8EDEE; --muted:#8FA0A6; --faint:#6A7C82;
     --line:#222E32; --line-strong:#33454A;
-    --a:#E07A3C; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
+    --a:#C48158; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
     --even:#6A7C82;
   }
 }
@@ -29,7 +29,7 @@
   --ground:#0D1315; --surface:#151D20; --sunk:#101719;
   --ink:#E8EDEE; --muted:#8FA0A6; --faint:#6A7C82;
   --line:#222E32; --line-strong:#33454A;
-  --a:#E07A3C; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
+  --a:#C48158; --a-soft:#3A2418; --b:#46A5B8; --b-soft:#132E34;
   --even:#6A7C82;
 }
 *{box-sizing:border-box}
@@ -314,7 +314,7 @@ header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-
   font-weight:600;font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink)}
 .live .dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex:none;
   box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:pulse 2.4s ease-out infinite}
-.live.stale .dot{background:#f59e0b;animation:none;box-shadow:none}
+.live.stale .dot{background:#BD9043;animation:none;box-shadow:none}
 .live .src{font-size:11.5px;letter-spacing:.04em;color:var(--faint);
   font-family:"Public Sans",system-ui,sans-serif;text-transform:none;font-weight:400}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}70%{box-shadow:0 0 0 7px rgba(34,197,94,0)}
@@ -377,12 +377,12 @@ tbody td.tm span,tbody td.num span{background:none}
   border-bottom:1px solid var(--line);background:var(--sunk)}
 .ticklabel s{display:block;text-decoration:none;font-size:12.5px;letter-spacing:.09em;
   color:var(--faint);margin-top:2px}
-.tick.hot .ticklabel{color:#C2561F}
+.tick.hot .ticklabel{color:#B65A2B}
 .tick.cold .ticklabel{color:#2F7FB3}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#FF8A4C}
-  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#5FB4E6}}
-:root[data-theme="dark"] .tick.hot .ticklabel{color:#FF8A4C}
-:root[data-theme="dark"] .tick.cold .ticklabel{color:#5FB4E6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tick.hot .ticklabel{color:#D0987B}
+  :root:not([data-theme="light"]) .tick.cold .ticklabel{color:#76AECF}}
+:root[data-theme="dark"] .tick.hot .ticklabel{color:#D0987B}
+:root[data-theme="dark"] .tick.cold .ticklabel{color:#76AECF}
 
 /* All five rows of a stat show at once; the motion is the strip sliding
    sideways to the next stat. Height follows the tallest panel. */
@@ -446,10 +446,10 @@ tbody td.tm span,tbody td.num span{background:none}
 .bkrow i{font-style:normal;text-align:right;font-variant-numeric:tabular-nums;color:var(--faint);
   font-size:12.5px}
 .bkrow i.y{color:var(--ink);font-weight:600;font-size:13px}
-.bkrow i.t{color:var(--t1-fg,#FF8A4C);font-weight:700}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#FF9A5C}}
-:root[data-theme="dark"] .bkrow i.t{color:#FF9A5C}
-:root:not([data-theme="dark"]) .bkrow i.t{color:#C2561F}
+.bkrow i.t{color:var(--t1-fg,#D0987B);font-weight:700}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bkrow i.t{color:#D5A486}}
+:root[data-theme="dark"] .bkrow i.t{color:#D5A486}
+:root:not([data-theme="dark"]) .bkrow i.t{color:#B65A2B}
 </style>
 <style>
 /* align every cell to the top so the game's totals sit level with the leading
@@ -771,6 +771,16 @@ table.model th{color:var(--ink);font-weight:700}
 .tickitem .v{padding-right:58px}
 </style>
 <style>
+/* The team colors are capped at 48% saturation now; these hardcoded accents
+   were still at 100% and stood out as the only glowing things left. */
+</style>
+<style>
+/* The name is the thing you read first in a ticker row; give it more size and
+   letterform weight than the figure beside it. */
+.tickitem b{font-size:17.5px;letter-spacing:-.005em}
+.tickitem span.v{font-weight:600}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}
@@ -941,12 +951,28 @@ function hslToHex(h,s,l){
 function teamColor(hex, dark){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;                              // pure black/white would render as flat grey
-  if (dark) l = Math.min(Math.max(l, 58), 78);
-  else      l = Math.min(Math.max(l, 26), 42);
+  // Lightness alone was clamped, so a high-chroma team color (Broncos orange,
+  // Vikings gold, Chiefs red) landed at S100 L58-78 and read as neon. Cap the
+  // saturation too: enough hue to tell 32 teams apart, none of the glow.
+  if (dark) { s = Math.min(s, 48); l = Math.min(Math.max(l, 55), 72); }
+  else      { s = Math.min(s, 62); l = Math.min(Math.max(l, 28), 44); }
   return hslToHex(h, s, l);
 }
-const CLIGHT = {}, CDARK = {};
-for (const t of Object.keys(COLORS)) { CLIGHT[t] = teamColor(COLORS[t], false); CDARK[t] = teamColor(COLORS[t], true); }
+// The ticker card already carries the team through its border, fill and logo,
+// so the name there is free to sit well clear of the ground instead of holding
+// the same mid lightness as the team color everywhere else.
+function teamColorText(hex, dark){
+  let [h,s,l] = hexToHsl(hex);
+  if (s < 12) s = 12;
+  if (dark) { s = Math.min(s, 44); l = Math.min(Math.max(l, 78), 89); }
+  else      { s = Math.min(s, 58); l = Math.min(Math.max(l, 17), 27); }
+  return hslToHex(h, s, l);
+}
+const CLIGHT = {}, CDARK = {}, CTLIGHT = {}, CTDARK = {};
+for (const t of Object.keys(COLORS)) {
+  CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
+  CTLIGHT[t] = teamColorText(COLORS[t], false); CTDARK[t] = teamColorText(COLORS[t], true);
+}
 // secondary colors, run through the same legibility pass, for the ticker borders
 const C2LIGHT = {}, C2DARK = {};
 for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColor(COLORS2[t], false); C2DARK[t] = teamColor(COLORS2[t], true); }
@@ -956,6 +982,7 @@ const isDark = () => {
 };
 const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 const tc2 = t => (isDark() ? C2DARK : C2LIGHT)[t];
+const tct = t => (isDark() ? CTDARK : CTLIGHT)[t];   // ticker name, higher contrast
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
@@ -1158,7 +1185,7 @@ function tickerPanels(side, best) {
       return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tc(o.t)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tc(o.t)}">${META[o.t].name}</b>
+        <b style="color:${tct(o.t)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

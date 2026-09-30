@@ -111,12 +111,28 @@ function hslToHex(h,s,l){
 function teamColor(hex, dark){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;                              // pure black/white would render as flat grey
-  if (dark) l = Math.min(Math.max(l, 58), 78);
-  else      l = Math.min(Math.max(l, 26), 42);
+  // Lightness alone was clamped, so a high-chroma team color (Broncos orange,
+  // Vikings gold, Chiefs red) landed at S100 L58-78 and read as neon. Cap the
+  // saturation too: enough hue to tell 32 teams apart, none of the glow.
+  if (dark) { s = Math.min(s, 48); l = Math.min(Math.max(l, 55), 72); }
+  else      { s = Math.min(s, 62); l = Math.min(Math.max(l, 28), 44); }
   return hslToHex(h, s, l);
 }
-const CLIGHT = {}, CDARK = {};
-for (const t of Object.keys(COLORS)) { CLIGHT[t] = teamColor(COLORS[t], false); CDARK[t] = teamColor(COLORS[t], true); }
+// The ticker card already carries the team through its border, fill and logo,
+// so the name there is free to sit well clear of the ground instead of holding
+// the same mid lightness as the team color everywhere else.
+function teamColorText(hex, dark){
+  let [h,s,l] = hexToHsl(hex);
+  if (s < 12) s = 12;
+  if (dark) { s = Math.min(s, 44); l = Math.min(Math.max(l, 78), 89); }
+  else      { s = Math.min(s, 58); l = Math.min(Math.max(l, 17), 27); }
+  return hslToHex(h, s, l);
+}
+const CLIGHT = {}, CDARK = {}, CTLIGHT = {}, CTDARK = {};
+for (const t of Object.keys(COLORS)) {
+  CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
+  CTLIGHT[t] = teamColorText(COLORS[t], false); CTDARK[t] = teamColorText(COLORS[t], true);
+}
 // secondary colors, run through the same legibility pass, for the ticker borders
 const C2LIGHT = {}, C2DARK = {};
 for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColor(COLORS2[t], false); C2DARK[t] = teamColor(COLORS2[t], true); }
@@ -126,6 +142,7 @@ const isDark = () => {
 };
 const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 const tc2 = t => (isDark() ? C2DARK : C2LIGHT)[t];
+const tct = t => (isDark() ? CTDARK : CTLIGHT)[t];   // ticker name, higher contrast
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
@@ -328,7 +345,7 @@ function tickerPanels(side, best) {
       return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tc(o.t)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tc(o.t)}">${META[o.t].name}</b>
+        <b style="color:${tct(o.t)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

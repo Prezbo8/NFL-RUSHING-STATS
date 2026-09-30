@@ -325,7 +325,7 @@ function tickerPanels(side, best) {
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem" style="--tsec:${tc2(o.t)}">
+      return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tc(o.t)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
         <b style="color:${tc(o.t)}">${META[o.t].name}</b>

@@ -712,3 +712,53 @@ table.model th{color:var(--ink);font-weight:700}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickghost{opacity:.34}}
 :root[data-theme="dark"] .tickghost{opacity:.34}
 </style>
+<style>
+/* Swap the two roles: the primary color draws the edge, the secondary fills
+   the card behind it, and the logo is scaled up to occupy most of the row.
+   The fill stays a wash rather than a solid slab -- the team name sits on it
+   in the primary color, and a full-strength secondary would bury it on the
+   teams whose two colors are close in value. */
+.tickitem{border:1.5px solid var(--tprim,var(--line));padding:8px 9px;margin:0 7px 6px}
+.tickitem::before{background:var(--tsec);opacity:.28}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickitem::before{opacity:.24}}
+:root[data-theme="dark"] .tickitem::before{opacity:.24}
+
+/* watermark large enough to read as the team's mark filling the card */
+.tickghost{right:-8px;width:62px;height:62px;opacity:.3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickghost{opacity:.38}}
+:root[data-theme="dark"] .tickghost{opacity:.38}
+.tickitem .v{padding-right:22px}
+</style>
+<style>
+/* A 62px square logo inside a 36px-tall card is cropped to a vertical smear.
+   Taller rows plus a logo sized off the card height let the whole mark show
+   and carry real area, which is what "fill more of the background" needs. */
+.tickitem{padding:13px 10px}
+.tickghost{top:-6px;bottom:-6px;right:2px;height:auto;width:auto;max-width:46%;
+  transform:none;object-fit:contain;object-position:right center}
+.tickitem .v{padding-right:30px}
+</style>
+<style>
+/* height:auto with top and bottom both set over-constrains a replaced element
+   -- the box resolved off the 46% width and hung below the card, so only the
+   logo's top corner showed. Size it explicitly off the row instead. */
+.tickghost{top:50%;bottom:auto;transform:translateY(-50%);right:5px;
+  width:54px;height:54px;max-width:none;object-position:center}
+</style>
+<style>
+/* `.tickitem img{width:20px}` outranks `.tickghost` on specificity, so every
+   "bigger watermark" above was silently clamped to 20px. Match the element
+   and the class so the size actually applies. */
+.tickitem{padding:11px 10px}
+.tickitem img.tickghost{width:56px;height:56px;right:4px}
+.tickitem .v{padding-right:34px}
+</style>
+<style>
+/* At 56px the old opacity reads as a second full-strength logo rather than a
+   watermark, and it was sitting on top of the #rank. Pull the figures clear
+   of the mark and take it back down to a wash. */
+.tickitem img.tickghost{opacity:.2}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickitem img.tickghost{opacity:.26}}
+:root[data-theme="dark"] .tickitem img.tickghost{opacity:.26}
+.tickitem .v{padding-right:58px}
+</style>

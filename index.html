@@ -840,6 +840,21 @@ table.model th{color:var(--ink);font-weight:700}
 .tickitem{border-width:3px}
 </style>
 <style>
+/* The panel header sat as a thin line of 20px type and 22px logos in a band
+   with room to spare. Team names and marks now carry the header, with the
+   "run offense / run defense" qualifiers held back so the names lead. */
+.phead{padding:16px 150px 16px 18px}
+.ptitle{font-size:20px;line-height:1.15;display:flex;flex-wrap:wrap;align-items:center;gap:0 9px}
+.ptitle .o,.ptitle .d{font-size:34px;letter-spacing:-.015em;line-height:1.05}
+.ptitle img{width:42px;height:42px;vertical-align:baseline;margin-right:0}
+.verdict{font-size:15px}
+.ghost{width:200px;height:200px;right:-42px}
+
+/* the stat table's team cell is the other place a name and mark appear */
+table.model tr.vals td.side span{font-size:26px;gap:9px}
+table.model tr.vals td.side img{width:30px;height:30px}
+</style>
+<style>
 #boot{padding:60px 0;text-align:center;color:var(--muted);font-family:"Public Sans",system-ui,sans-serif}
 #boot b{display:block;font-family:"Archivo",system-ui,sans-serif;font-size:19px;color:var(--ink);margin-bottom:7px}
 #boot code{font-size:12.5px;color:var(--faint)}

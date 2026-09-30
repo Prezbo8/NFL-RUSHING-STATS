@@ -108,41 +108,59 @@ function hslToHex(h,s,l){
 }
 // Many NFL primaries are near-black (Raiders, Bears, Texans) or pale (Saints, Steelers gold).
 // Clamp lightness per theme so every team stays legible on both grounds.
+function relLum(hex){
+  const v = [1,3,5].map(i => parseInt(hex.slice(i,i+2),16)/255)
+                   .map(c => c <= .03928 ? c/12.92 : Math.pow((c+.055)/1.055, 2.4));
+  return .2126*v[0] + .7152*v[1] + .0722*v[2];
+}
+const contrast = (a,b) => {
+  const x = relLum(a), y = relLum(b);
+  return (Math.max(x,y) + .05) / (Math.min(x,y) + .05);
+};
+// Team names keep the brand color at full saturation -- capping it was what
+// washed them out. Lightness alone does the legibility work, and only as far
+// as it has to: a saturated blue or purple carries very little luminance, so
+// Ravens and Vikings need to travel further than Chiefs red to clear the same
+// contrast bar. Stepping per team beats one clamp wide enough for the worst
+// case, which would have lifted everything into the glow.
 function teamColor(hex, dark){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;                              // pure black/white would render as flat grey
-  // Lightness alone was clamped, so a high-chroma team color (Broncos orange,
-  // Vikings gold, Chiefs red) landed at S100 L58-78 and read as neon. Cap the
-  // saturation too: enough hue to tell 32 teams apart, none of the glow.
-  if (dark) { s = Math.min(s, 48); l = Math.min(Math.max(l, 55), 72); }
-  else      { s = Math.min(s, 62); l = Math.min(Math.max(l, 28), 44); }
-  return hslToHex(h, s, l);
+  if (dark) l = Math.min(Math.max(l, 58), 78);
+  else      l = Math.min(Math.max(l, 26), 42);
+  const ground = dark ? "#151d20" : "#ffffff";
+  let out = hslToHex(h, s, l);
+  for (let i = 0; i < 44 && contrast(out, ground) < 4.5; i++) {
+    l += dark ? 1 : -1;
+    if (l > 93 || l < 10) break;
+    out = hslToHex(h, s, l);
+  }
+  return out;
 }
-// The ticker card already carries the team through its border, fill and logo,
-// so the name there is free to sit well clear of the ground instead of holding
-// the same mid lightness as the team color everywhere else.
-function teamColorText(hex, dark){
+// Chrome only -- the ticker card's border and fill. Team NAMES keep the full
+// brand color above; it was capping those that washed them out.
+function teamColorChrome(hex, dark){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;
-  if (dark) { s = Math.min(s, 44); l = Math.min(Math.max(l, 78), 89); }
-  else      { s = Math.min(s, 58); l = Math.min(Math.max(l, 17), 27); }
+  if (dark) { s = Math.min(s, 52); l = Math.min(Math.max(l, 50), 66); }
+  else      { s = Math.min(s, 64); l = Math.min(Math.max(l, 30), 46); }
   return hslToHex(h, s, l);
 }
 const CLIGHT = {}, CDARK = {}, CTLIGHT = {}, CTDARK = {};
 for (const t of Object.keys(COLORS)) {
   CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
-  CTLIGHT[t] = teamColorText(COLORS[t], false); CTDARK[t] = teamColorText(COLORS[t], true);
+  CTLIGHT[t] = teamColorChrome(COLORS[t], false); CTDARK[t] = teamColorChrome(COLORS[t], true);
 }
 // secondary colors, run through the same legibility pass, for the ticker borders
 const C2LIGHT = {}, C2DARK = {};
-for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColor(COLORS2[t], false); C2DARK[t] = teamColor(COLORS2[t], true); }
+for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColorChrome(COLORS2[t], false); C2DARK[t] = teamColorChrome(COLORS2[t], true); }
 const isDark = () => {
   const ex = document.documentElement.getAttribute("data-theme");
   return ex ? ex === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
 };
 const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 const tc2 = t => (isDark() ? C2DARK : C2LIGHT)[t];
-const tct = t => (isDark() ? CTDARK : CTLIGHT)[t];   // ticker name, higher contrast
+const tcc = t => (isDark() ? CTDARK : CTLIGHT)[t];   // muted, for the ticker border
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
@@ -342,10 +360,10 @@ function tickerPanels(side, best) {
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tc(o.t)}">
+      return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tcc(o.t)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tct(o.t)}">${META[o.t].name}</b>
+        <b style="color:${tc(o.t)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

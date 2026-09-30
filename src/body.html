@@ -137,30 +137,55 @@ function teamColor(hex, dark){
   }
   return out;
 }
-// Chrome only -- the ticker card's border and fill. Team NAMES keep the full
-// brand color above; it was capping those that washed them out.
-function teamColorChrome(hex, dark){
+// A ticker card paints the team's colors as they actually are: the secondary
+// fills it and the primary draws the edge, neither pushed toward the theme.
+// That means a card can be genuinely black (Falcons, Bengals, Jets) or
+// genuinely gold (Packers, Steelers) regardless of which theme is on, so
+// everything written on it has to be picked against the card itself rather
+// than against the page.
+const mix = (a, b, t) => {
+  const v = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+  const [x,y] = [v(a), v(b)];
+  return "#" + x.map((c,i) => Math.round(c*(1-t) + y[i]*t).toString(16).padStart(2,"0")).join("");
+};
+// a hair of the page surface keeps five black cards in a row from reading as
+// one hole, without moving the color off the brand value
+const cardFill = (hex, dark) => mix(hex, dark ? "#151D20" : "#FFFFFF", .12);
+
+// Step away from the card until the text clears it. Direction comes from the
+// card's own luminance, not the theme -- green on a gold Packers card has to
+// get darker even when the page around it is dark.
+function onCard(hex, ground, target){
   let [h,s,l] = hexToHsl(hex);
   if (s < 12) s = 12;
-  if (dark) { s = Math.min(s, 52); l = Math.min(Math.max(l, 50), 66); }
-  else      { s = Math.min(s, 64); l = Math.min(Math.max(l, 30), 46); }
-  return hslToHex(h, s, l);
+  const up = relLum(ground) < .2;
+  let out = hslToHex(h, s, l);
+  for (let i = 0; i < 100 && contrast(out, ground) < target; i++) {
+    l += up ? 1 : -1;
+    if (l > 96 || l < 4) break;
+    out = hslToHex(h, s, l);
+  }
+  return out;
 }
-const CLIGHT = {}, CDARK = {}, CTLIGHT = {}, CTDARK = {};
+// A fixed luminance threshold picks badly on the mid-tone cards -- silver
+// (Cowboys, Colts, Raiders) and mid blue (Titans) sit right at the crossover,
+// where it chose white and left the figure at 2.5:1. Ask which of the two
+// actually wins against this card.
+const inkOn = ground =>
+  contrast("#F2F6F7", ground) >= contrast("#12181A", ground) ? "#F2F6F7" : "#12181A";
+const CLIGHT = {}, CDARK = {};
 for (const t of Object.keys(COLORS)) {
   CLIGHT[t] = teamColor(COLORS[t], false);  CDARK[t]  = teamColor(COLORS[t], true);
-  CTLIGHT[t] = teamColorChrome(COLORS[t], false); CTDARK[t] = teamColorChrome(COLORS[t], true);
 }
 // secondary colors, run through the same legibility pass, for the ticker borders
 const C2LIGHT = {}, C2DARK = {};
-for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = teamColorChrome(COLORS2[t], false); C2DARK[t] = teamColorChrome(COLORS2[t], true); }
+for (const t of Object.keys(COLORS2)) { C2LIGHT[t] = cardFill(COLORS2[t], false); C2DARK[t] = cardFill(COLORS2[t], true); }
 const isDark = () => {
   const ex = document.documentElement.getAttribute("data-theme");
   return ex ? ex === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
 };
 const tc = t => (isDark() ? CDARK : CLIGHT)[t];
 const tc2 = t => (isDark() ? C2DARK : C2LIGHT)[t];
-const tcc = t => (isDark() ? CTDARK : CTLIGHT)[t];   // muted, for the ticker border
 
 // Columns mirror the RUNNING MODEL tab: totals first, then the per-game and
 // per-play stats that carry a RANK row underneath, exactly as the sheet has it.
@@ -360,10 +385,11 @@ function tickerPanels(side, best) {
     const pick = best ? rows.slice(0,5) : rows.slice(-5).reverse();
     const items = pick.map((o,i)=>{
       const rank = best ? i+1 : rows.length-i;
-      return `<span class="tickitem" style="--tsec:${tc2(o.t)};--tprim:${tcc(o.t)}">
+      const fill = tc2(o.t);                       // the team's real secondary
+      return `<span class="tickitem" style="--tfill:${fill};--tedge:${onCard(COLORS[o.t], fill, 2.6)};--tink:${inkOn(fill)}">
         <img class="tickghost" src="${LOGOS[o.t]}" alt="" aria-hidden="true">
         <img src="${LOGOS[o.t]}" alt="">
-        <b style="color:${tc(o.t)}">${META[o.t].name}</b>
+        <b style="color:${onCard(COLORS[o.t], fill, 4)}">${META[o.t].name}</b>
         <span class="v">${o.v.toFixed(st.dp)} <i>#${rank}</i></span></span>`;
     }).join("");
     return `<div class="tickpanel"><span class="tickstat">${st.label}</span>

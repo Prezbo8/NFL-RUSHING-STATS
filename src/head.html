@@ -786,3 +786,21 @@ table.model th{color:var(--ink);font-weight:700}
    colors stay at full saturation instead of being lightened into the glow. */
 .tickitem b{font-size:19px;font-weight:700;letter-spacing:-.01em}
 </style>
+<style>
+/* The fill was a 14% wash over the page surface, which is why a black
+   secondary showed up as light grey -- the color was barely there and the
+   surface was doing the work. The card now paints the secondary itself. */
+.tickitem{background:var(--tfill);border:1.5px solid var(--tedge)}
+.tickitem::before{content:none}
+.tickitem .v{color:var(--tink)}
+.tickitem .v i{color:var(--tink);opacity:.62}
+/* on a black card a dark logo needs more presence than on a gold one, but a
+   single value that works either way beats two that fight the fill */
+.tickitem img.tickghost{opacity:.3;mix-blend-mode:luminosity}
+</style>
+<style>
+/* `.tickitem span.v` outranks `.tickitem .v`, so the figure kept the page ink
+   and went dark on the black cards. Match the same selector. */
+.tickitem span.v{color:var(--tink)}
+.tickitem span.v i{color:var(--tink);opacity:.6}
+</style>

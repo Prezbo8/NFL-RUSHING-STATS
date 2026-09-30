@@ -521,7 +521,20 @@ function panel(offT, defT) {
 
 function render() {
   const a = SEL.A, b = SEL.B;
-  document.getElementById("panels").innerHTML = panel(a,b);
+  const box = document.getElementById("panels");
+  if (!a || !b) {
+    const missing = !a && !b ? "a rushing offense and a rushing defense"
+                  : !a ? "a rushing offense" : "a rushing defense";
+    box.innerHTML = `<div class="empty">
+      <p class="eh">Pick ${missing} to see the matchup.</p>
+      <p class="es">Every stat, the league rank for each one, and the last ten games both
+        teams have played. <button type="button" class="elink">Or browse all 32 teams</button>.</p>
+    </div>`;
+    box.querySelector(".elink").addEventListener("click",
+      () => document.getElementById("tab-rankings").click());
+    return;
+  }
+  box.innerHTML = panel(a,b);
   renderLogs(a,b);
 }
 
@@ -529,7 +542,6 @@ const RANK_COLS = [
   {k:"games",    label:"GP",      dp:0, neutral:true},
   {k:"grade_raw",label:"Raw",     dp:0, offHigh:true,  defHigh:true},
   {k:"grade",    label:"Adj",     dp:0, offHigh:true,  defHigh:true},
-  {k:"sos",      label:"SOS",     dp:0, neutral:true},
   {k:"dvoa",     label:"DVOA",    dp:1, offHigh:true,  defHigh:false},
   {k:"succ_pct", label:"SUCC%",   dp:1, offHigh:true,  defHigh:false},
   {k:"epa_att",  label:"EPA/ATT", dp:3, offHigh:true,  defHigh:false},
@@ -538,10 +550,11 @@ const RANK_COLS = [
   {k:"stf_pct",  label:"STF%",    dp:1, offHigh:false, defHigh:true},
   {k:"exp_pct",  label:"EXP%",    dp:1, offHigh:true,  defHigh:false},
   {k:"ypc",      label:"YPC",     dp:2, offHigh:true,  defHigh:false},
-  {k:"att_gm",   label:"ATT/GM",  dp:1, neutral:true},
   {k:"yds_gm",   label:"YDS/GM",  dp:1, offHigh:true,  defHigh:false},
+  {k:"att_gm",   label:"ATT/GM",  dp:1, neutral:true},
   {k:"rush_pct", label:"RUSH%",   dp:1, neutral:true},
   {k:"ply_gm",   label:"PLY/GM",  dp:1, neutral:true},
+  {k:"sos",      label:"SOS",     dp:0, neutral:true},
 ];
 
 let rkSide = "offense", rkKey = "grade", rkBest = true;
@@ -623,12 +636,23 @@ function bindRankings() {
   }
 }
 
-const SEL = {A:"BLT", B:"CAR"};
+// nothing is chosen until the visitor chooses it — the page used to open on
+// Baltimore vs Carolina, which read as a result rather than a placeholder
+const SEL = {A:null, B:null};
 
 function paint(slot){
   const t = SEL[slot];
   const input = document.getElementById("team"+slot);
   const img = document.getElementById("logo"+slot);
+  const pick = document.getElementById("pick"+slot);
+  if (!t) {
+    input.value = "";
+    input.style.removeProperty("--tcol");
+    img.hidden = true; img.removeAttribute("src"); img.alt = "";
+    pick.style.removeProperty(slot === "A" ? "--ta" : "--tb");
+    return;
+  }
+  img.hidden = false;
   input.value = NAMES[t];
   input.style.setProperty("--tcol", tc(t));
   img.src = LOGOS[t]; img.alt = NAMES[t] + " logo";

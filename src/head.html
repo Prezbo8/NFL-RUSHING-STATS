@@ -667,3 +667,17 @@ table.model th{color:var(--ink);font-weight:700}
    a normal display; overflow-x stays as the fallback on narrow ones. */
 .wrap{max-width:1440px}
 </style>
+<style>
+/* Nothing is selected on a first visit, so the panel area holds a prompt
+   rather than a matchup nobody asked for. */
+.field img[hidden]{display:none}
+.empty{border:1px solid var(--line);background:var(--surface);padding:44px 26px;text-align:center}
+.empty .eh{font-family:"Archivo",system-ui,sans-serif;font-weight:600;font-size:19px;
+  color:var(--ink);margin:0 0 8px;letter-spacing:.01em}
+.empty .es{font-size:13.5px;color:var(--muted);margin:0;max-width:52ch;
+  margin-inline:auto;line-height:1.6}
+.empty .elink{font:inherit;color:var(--a);background:none;border:0;padding:0;cursor:pointer;
+  text-decoration:underline;text-underline-offset:2px}
+.empty .elink:hover{color:var(--ink)}
+.empty .elink:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>

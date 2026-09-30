@@ -818,3 +818,11 @@ table.model th{color:var(--ink);font-weight:700}
 :root[data-theme="dark"] .tickitem img.tickghost{opacity:.62}
 :root:not([data-theme="dark"]) .tickitem img.tickghost{opacity:.62}
 </style>
+<style>
+/* Push the watermark nearly to full strength -- the figures sit clear of it,
+   so there is no reason to hold it back. */
+.tickitem img.tickghost{opacity:.92}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tickitem img.tickghost{opacity:.92}}
+:root[data-theme="dark"] .tickitem img.tickghost{opacity:.92}
+:root:not([data-theme="dark"]) .tickitem img.tickghost{opacity:.92}
+</style>
